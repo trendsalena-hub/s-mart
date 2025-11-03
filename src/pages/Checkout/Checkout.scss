@@ -1,0 +1,596 @@
+// Checkout Page Styles - Mobile First
+
+// Variables
+$primary-color: #e8b4c9;
+$primary-dark: #d48aa9;
+$secondary-color: #f5f5f5;
+$text-color: #333;
+$light-text: #666;
+$white: #fff;
+$success-color: #4CAF50;
+$error-color: #f44336;
+$border-color: #e0e0e0;
+$transition: all 0.3s ease;
+
+.checkout {
+  min-height: 100vh;
+  background: $secondary-color;
+  padding: 40px 0;
+
+  @media (min-width: 769px) {
+    padding: 60px 0;
+  }
+
+  // Empty State
+  &__empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: $white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    i {
+      font-size: 80px;
+      color: $light-text;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: $text-color;
+    }
+
+    p {
+      color: $light-text;
+      margin-bottom: 30px;
+    }
+  }
+
+  // Header
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+
+    h1 {
+      font-size: 28px;
+      color: $text-color;
+
+      @media (max-width: 576px) {
+        font-size: 24px;
+      }
+    }
+  }
+
+  &__back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: $white;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    color: $text-color;
+    font-weight: 600;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      background: $secondary-color;
+    }
+  }
+
+  // Content Layout
+  &__content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+
+    @media (min-width: 992px) {
+      grid-template-columns: 1fr 400px;
+    }
+  }
+
+  // Section
+  &__section {
+    background: $white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+
+    @media (min-width: 769px) {
+      padding: 30px;
+    }
+  }
+
+  &__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: $text-color;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      i {
+        color: $primary-color;
+      }
+    }
+  }
+}
+
+// Address Form
+.address-form {
+  background: $secondary-color;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+
+  h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: $text-color;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+
+    @media (min-width: 576px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: $text-color;
+  }
+
+  input,
+  select {
+    padding: 12px;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: $transition;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    }
+  }
+}
+
+.address-type-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.address-type-btn {
+  flex: 1;
+  padding: 12px;
+  background: $white;
+  border: 2px solid $border-color;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: $transition;
+  font-weight: 600;
+
+  &.active {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+  }
+
+  &:hover:not(.active) {
+    background: $secondary-color;
+  }
+}
+
+// Address List
+.address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.address-card {
+  border: 2px solid $border-color;
+  border-radius: 12px;
+  padding: 20px;
+  transition: $transition;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.02);
+  }
+
+  &--selected {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.05);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+
+    input[type='radio'] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: $primary-color;
+    }
+  }
+
+  &__type {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    text-transform: capitalize;
+
+    i {
+      color: $primary-color;
+    }
+
+    .badge-default {
+      background: $success-color;
+      color: $white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 5px;
+    }
+  }
+
+  &__content {
+    margin-left: 35px;
+    margin-bottom: 15px;
+
+    h4 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: $text-color;
+    }
+
+    p {
+      font-size: 14px;
+      color: $light-text;
+      margin: 4px 0;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 15px;
+    margin-left: 35px;
+
+    button {
+      background: none;
+      border: none;
+      color: $primary-color;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: $transition;
+
+      &:hover {
+        color: $primary-dark;
+      }
+
+      &:last-child {
+        color: $error-color;
+
+        &:hover {
+          color: darken($error-color, 10%);
+        }
+      }
+    }
+  }
+}
+
+// Checkout Products
+.checkout-products {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.checkout-product {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 15px;
+  padding: 15px;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+
+  @media (min-width: 576px) {
+    grid-template-columns: 100px 1fr auto;
+  }
+
+  &__image {
+    width: 80px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: $secondary-color;
+
+    @media (min-width: 576px) {
+      width: 100px;
+      height: 120px;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-color;
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      width: fit-content;
+
+      &--new {
+        background: linear-gradient(135deg, #e8b4c9, #d48aa9);
+        color: $white;
+      }
+
+      &--sale {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        color: $white;
+      }
+
+      &--hot {
+        background: linear-gradient(135deg, #ffa726, #f57c00);
+        color: $white;
+      }
+
+      &--trending {
+        background: linear-gradient(135deg, #4ecdc4, #00a896);
+        color: $white;
+      }
+    }
+  }
+
+  &__price {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .price-current {
+      font-size: 18px;
+      font-weight: 700;
+      color: $primary-color;
+    }
+
+    .price-original {
+      font-size: 14px;
+      color: $light-text;
+      text-decoration: line-through;
+    }
+  }
+
+  &__quantity {
+    font-size: 14px;
+    color: $light-text;
+  }
+
+  &__total {
+    font-size: 20px;
+    font-weight: 700;
+    color: $primary-color;
+    text-align: right;
+
+    @media (max-width: 576px) {
+      grid-column: 2 / -1;
+      text-align: left;
+      margin-top: 10px;
+    }
+  }
+}
+
+// Order Summary
+.order-summary {
+  background: $white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: $text-color;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 15px;
+    color: $text-color;
+
+    &--total {
+      border-top: 2px solid $border-color;
+      padding-top: 15px;
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: $primary-color;
+    }
+  }
+
+  &__info {
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+
+    &--success {
+      background: rgba($success-color, 0.1);
+      color: $success-color;
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  &__divider {
+    height: 1px;
+    background: $border-color;
+    margin: 15px 0;
+  }
+
+  &__place-order {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, $primary-color, $primary-dark);
+    color: $white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba($primary-color, 0.4);
+      background: linear-gradient(135deg, $primary-dark, $primary-color);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__security {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: $light-text;
+    font-size: 13px;
+
+    i {
+      color: $success-color;
+    }
+  }
+}
+
+// Button Styles
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: $transition;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &--primary {
+    background: linear-gradient(135deg, $primary-color, $primary-dark);
+    color: $white;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+    }
+  }
+
+  &--secondary {
+    background: $white;
+    color: $text-color;
+    border: 1px solid $border-color;
+
+    &:hover {
+      background: $secondary-color;
+    }
+  }
+}
+
+// Container
+.container {
+  margin: 0 auto;
+  padding: 0 15px;
+  box-sizing: border-box;
+
+  @media (min-width: 769px) {
+    padding: 0 30px;
+  }
+}

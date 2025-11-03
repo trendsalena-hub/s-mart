@@ -1,0 +1,140 @@
+.contact-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background-color: #fff;
+    color: #1b1b1b;
+    text-align: center;
+  
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 500;
+      margin-bottom: 2.5rem;
+    }
+  
+    .contact-form {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+  
+      .form-row {
+        display: flex;
+        gap: 1rem;
+  
+        input {
+          flex: 1;
+        }
+  
+        @media (max-width: 768px) {
+          flex-direction: column;
+        }
+      }
+  
+      input,
+      textarea {
+        padding: 14px 18px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        outline: none;
+        transition: border 0.3s ease, box-shadow 0.3s ease;
+  
+        &:focus {
+          border-color: #6b2920;
+          box-shadow: 0 0 5px rgba(107, 41, 32, 0.2);
+        }
+      }
+  
+      textarea {
+        border-radius: 25px;
+        resize: none;
+        min-height: 120px;
+      }
+  
+      button {
+        width: 140px;
+        padding: 12px 0;
+        background-color: #1b1b1b;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 500;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        align-self: center;
+        transition: background 0.3s ease, transform 0.2s ease;
+  
+        &:hover {
+          background-color: #6b2920;
+          transform: translateY(-2px);
+        }
+  
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  
+    /* ==============================
+       📱 RESPONSIVE BREAKPOINTS
+       ============================== */
+  
+    @media (max-width: 1024px) {
+      padding: 60px 40px;
+  
+      h1 {
+        font-size: 2.2rem;
+      }
+  
+      .contact-form {
+        max-width: 600px;
+      }
+    }
+  
+    @media (max-width: 768px) {
+      padding: 50px 25px;
+  
+      h1 {
+        font-size: 2rem;
+      }
+  
+      .contact-form {
+        gap: 1.2rem;
+      }
+  
+      button {
+        width: 130px;
+        padding: 10px 0;
+      }
+    }
+  
+    @media (max-width: 480px) {
+      padding: 40px 15px;
+  
+      h1 {
+        font-size: 1.7rem;
+        margin-bottom: 2rem;
+      }
+  
+      .contact-form {
+        gap: 1rem;
+      }
+  
+      input,
+      textarea {
+        font-size: 0.95rem;
+        padding: 12px 15px;
+        border-radius: 25px;
+      }
+  
+      button {
+        width: 120px;
+        font-size: 0.95rem;
+      }
+    }
+  }
+  

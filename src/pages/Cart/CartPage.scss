@@ -1,0 +1,547 @@
+// Cart Page Styles - Mobile First Approach
+
+// Variables
+$primary-color: #8B4513;
+$secondary-color: #f5f5f5;
+$text-color: #333;
+$light-text: #666;
+$white: #fff;
+$success-color: #4CAF50;
+$warning-color: #ff9800;
+$border-color: #e0e0e0;
+$transition: all 0.3s ease;
+
+.cart-page {
+  min-height: 100vh;
+  background: $secondary-color;
+  padding: 40px 0;
+  width: 100%;
+  overflow-x: hidden;
+
+  @media (min-width: 769px) {
+    padding: 60px 0;
+  }
+
+  // Empty Cart State
+  &__empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: $white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    i {
+      font-size: 80px;
+      color: $light-text;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: $text-color;
+
+      @media (max-width: 576px) {
+        font-size: 24px;
+      }
+    }
+
+    p {
+      color: $light-text;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 30px;
+      background: $primary-color;
+      color: $white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: $transition;
+
+      &:hover {
+        background: darken($primary-color, 10%);
+      }
+    }
+  }
+
+  // Header
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    h1 {
+      font-size: 28px;
+      color: $text-color;
+
+      @media (max-width: 576px) {
+        font-size: 24px;
+      }
+    }
+  }
+
+  &__clear-btn {
+    padding: 10px 20px;
+    background: transparent;
+    color: #d32f2f;
+    border: 1px solid #d32f2f;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background: #d32f2f;
+      color: $white;
+    }
+  }
+
+  // Content Layout
+  &__content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    width: 100%;
+
+    @media (min-width: 992px) {
+      grid-template-columns: 1fr 380px;
+    }
+
+    @media (min-width: 1200px) {
+      grid-template-columns: 1fr 400px;
+    }
+  }
+
+  // Cart Items
+  &__items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+// Cart Item
+.cart-item {
+  background: $white;
+  border-radius: 8px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 15px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: $transition;
+
+  @media (min-width: 576px) {
+    grid-template-columns: 120px 1fr auto auto;
+    gap: 20px;
+    align-items: center;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &__image {
+    width: 100px;
+    height: 120px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: $secondary-color;
+
+    @media (min-width: 576px) {
+      width: 120px;
+      height: 150px;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0;
+    line-height: 1.4;
+
+    @media (max-width: 576px) {
+      font-size: 14px;
+    }
+  }
+
+  &__price-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__price {
+    font-size: 18px;
+    font-weight: 700;
+    color: $primary-color;
+
+    @media (max-width: 576px) {
+      font-size: 16px;
+    }
+  }
+
+  &__original-price {
+    font-size: 14px;
+    color: $light-text;
+    text-decoration: line-through;
+
+    @media (max-width: 576px) {
+      font-size: 13px;
+    }
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &--new {
+      background: #4CAF50;
+      color: $white;
+    }
+
+    &--sale {
+      background: #f44336;
+      color: $white;
+    }
+
+    &--hot {
+      background: #ff5722;
+      color: $white;
+    }
+
+    &--trending {
+      background: #2196F3;
+      color: $white;
+    }
+  }
+
+  // Quantity Controls
+  &__quantity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 5px;
+    width: fit-content;
+
+    @media (max-width: 576px) {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+    }
+  }
+
+  &__qty-btn {
+    width: 32px;
+    height: 32px;
+    background: $secondary-color;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition;
+    color: $text-color;
+
+    &:hover {
+      background: $primary-color;
+      color: $white;
+    }
+
+    i {
+      font-size: 12px;
+    }
+  }
+
+  &__qty-input {
+    width: 50px;
+    height: 32px;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: $text-color;
+
+    &:focus {
+      outline: none;
+    }
+
+    /* Remove spinner arrows */
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    &[type='number'] {
+      -moz-appearance: textfield; /* ✅ Hides arrows in Firefox */
+      appearance: textfield;      /* ✅ Standard property for all browsers */
+    
+      /* ✅ Hides up/down arrows in Chrome, Safari, Edge, Opera */
+      &::-webkit-inner-spin-button,
+      &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+    
+  }
+
+  // Total
+  &__total {
+    font-size: 20px;
+    font-weight: 700;
+    color: $primary-color;
+    text-align: right;
+
+    @media (max-width: 576px) {
+      grid-column: 1 / -1;
+      text-align: left;
+      margin-top: 10px;
+      font-size: 18px;
+    }
+  }
+
+  // Remove Button
+  &__remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: $transition;
+    color: $light-text;
+
+    &:hover {
+      background: #f44336;
+      color: $white;
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+}
+
+// Cart Summary
+.cart-summary {
+  background: $white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+
+  &__title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: $text-color;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 15px;
+    color: $text-color;
+
+    &--total {
+      border-top: 2px solid $border-color;
+      padding-top: 15px;
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: $primary-color;
+    }
+  }
+
+  &__info {
+    background: rgba($success-color, 0.1);
+    color: $success-color;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+
+    &--warning {
+      background: rgba($warning-color, 0.1);
+      color: $warning-color;
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  &__divider {
+    height: 1px;
+    background: $border-color;
+    margin: 15px 0;
+  }
+
+  &__checkout-btn {
+    width: 100%;
+    padding: 15px;
+    background: $primary-color;
+    color: $white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: $transition;
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    margin-top: 20px;
+
+    &:hover {
+      background: darken($primary-color, 10%);
+    }
+  }
+
+  &__continue-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: $primary-color;
+    border: 1px solid $primary-color;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: $transition;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-top: 10px;
+
+    &:hover {
+      background: $primary-color;
+      color: $white;
+    }
+  }
+
+  // Promo Code
+  &__promo {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+
+    h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: $text-color;
+    }
+  }
+
+  &__promo-input {
+    display: flex;
+    gap: 8px;
+
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      font-size: 14px;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+
+    button {
+      padding: 10px 20px;
+      background: $secondary-color;
+      color: $text-color;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: $transition;
+
+      &:hover {
+        background: $primary-color;
+        color: $white;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  // Security Badge
+  &__security {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: $light-text;
+    font-size: 13px;
+
+    i {
+      color: $success-color;
+    }
+  }
+}
+
+// Container
+.container {
+  margin: 0 auto;
+  padding: 0 15px;
+  box-sizing: border-box;
+
+  @media (min-width: 769px) {
+    padding: 0 30px;
+  }
+}

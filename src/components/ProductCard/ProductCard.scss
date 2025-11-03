@@ -1,0 +1,397 @@
+// ProductCard Styles - Mobile First Approach with Enhanced Design
+
+// Variables
+$primary-color: #c9a86a; // Gold color matching logo
+$primary-dark: #b8935a;
+$secondary-color: #f5f5f5;
+$text-color: #333;
+$light-text: #666;
+$white: #fff;
+$star-color: #ffd700;
+$border-color: #e0e0e0;
+$success-color: #4CAF50;
+$buy-now-color: #c9a86a; // Gold for buy now
+$transition: all 0.3s ease;
+
+.product-card {
+  background: $white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: $transition;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba($primary-color, 0.3);
+
+    .product-card__actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .product-card__image {
+      transform: scale(1.05);
+    }
+  }
+
+  // Image Section
+  &__image-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: $secondary-color;
+    height: 300px;
+
+    @media (max-width: 768px) {
+      height: 250px;
+    }
+  }
+
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  // Badge with Gradients
+  &__badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+
+    &--new {
+      background: linear-gradient(135deg, $primary-color, darken($primary-color, 10%));
+    }
+
+    &--sale {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    }
+
+    &--hot {
+      background: linear-gradient(135deg, #ffa726, #f57c00);
+    }
+
+    &--trending {
+      background: linear-gradient(135deg, #4ecdc4, #00a896);
+    }
+  }
+
+  // Discount Label
+  &__discount-label {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: $white;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  // Hover Actions
+  &__actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(10px);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: $transition;
+    z-index: 3;
+
+    @media (max-width: 768px) {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      top: auto;
+      bottom: 15px;
+      left: 50%;
+    }
+  }
+
+  &__action-btn {
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: $transition;
+    color: $text-color;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+    i {
+      font-size: 1rem;
+    }
+
+    &:hover {
+      background: $white;
+      transform: scale(1.1);
+    }
+
+    &--quickview:hover {
+      color: #4ecdc4;
+    }
+
+    &--cart:hover {
+      color: $primary-color;
+    }
+
+    &--wishlist:hover {
+      color: #ff6b6b;
+    }
+
+    @media (max-width: 768px) {
+      width: 40px;
+      height: 40px;
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Product Info
+  &__info {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+
+    @media (max-width: 768px) {
+      padding: 15px;
+    }
+  }
+
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;              /* ✅ Standard property */
+    -webkit-line-clamp: 2;      /* ✅ Vendor-prefixed property */
+    overflow: hidden;
+    min-height: 2.8em;
+  
+    @media (max-width: 768px) {
+      font-size: 1rem;
+      min-height: 2.4em;
+    }
+  }
+  
+
+  &__price-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: $primary-color;
+
+    @media (max-width: 768px) {
+      font-size: 1.2rem;
+    }
+  }
+
+  &__original-price {
+    font-size: 1rem;
+    color: #999;
+    text-decoration: line-through;
+
+    @media (max-width: 768px) {
+      font-size: 0.9rem;
+    }
+  }
+
+  // Rating
+  &__rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  &__stars {
+    display: flex;
+    gap: 2px;
+
+    i {
+      font-size: 0.9rem;
+      color: $star-color;
+    }
+  }
+
+  &__rating-count {
+    font-size: 0.9rem;
+    color: $light-text;
+  }
+
+  // Action Buttons Container
+  &__buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  // Buy Now Button with Gold Gradient
+  &__buy-btn {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, $buy-now-color 0%, darken($buy-now-color, 15%) 100%);
+    color: $white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba($buy-now-color, 0.4);
+
+    i {
+      font-size: 1rem;
+      animation: pulse 2s infinite;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba($buy-now-color, 0.5);
+      background: linear-gradient(135deg, darken($buy-now-color, 5%) 0%, darken($buy-now-color, 20%) 100%);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      padding: 10px 16px;
+      font-size: 0.9rem;
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Add to Cart Button with Gold Gradient
+  &__cart-btn {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, $primary-color, $primary-dark);
+    color: $white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba($primary-color, 0.3);
+
+    i {
+      font-size: 0.9rem;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba($primary-color, 0.5);
+      background: linear-gradient(135deg, $primary-dark, darken($primary-dark, 10%));
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      padding: 10px 16px;
+      font-size: 0.9rem;
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Pulse animation for Buy Now button icon
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+// Product Grid Layout (Optional - for Home page)
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+// Product Card Wrapper
+.product-card-wrapper {
+  opacity: 0;
+  
+  &.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
