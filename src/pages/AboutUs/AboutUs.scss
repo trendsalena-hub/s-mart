@@ -9,12 +9,14 @@ $light-text: #666;
 $white: #fff;
 $border-color: #e0e0e0;
 $transition: all 0.3s ease;
-
+.main-aboutus
 .about-us {
   min-height: 100vh;
+  opacity: 0;
   transition: opacity 0.5s ease;
 
   &.visible {
+    opacity: 1;
   }
 }
 
@@ -653,7 +655,6 @@ $transition: all 0.3s ease;
 
 // Container
 .container {
-  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
   box-sizing: border-box;
