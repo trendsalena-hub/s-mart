@@ -6,6 +6,8 @@ import {
   addDoc, 
   getDocs, 
   doc, 
+  getDoc,
+  setDoc,
   updateDoc, 
   deleteDoc,
   query,
@@ -16,12 +18,14 @@ import './AdminDashboard.scss';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState('user');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('add-product'); // add-product, products, contacts
+  const [activeTab, setActiveTab] = useState('add-product'); // add-product, products, contacts, banner
   const [products, setProducts] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   // Product Form State
@@ -38,23 +42,43 @@ const AdminDashboard = () => {
     featured: false
   });
 
+  // Banner Settings State
+  const [bannerSettings, setBannerSettings] = useState({
+    text: 'Get 10% off and Free Delivery on all orders',
+    enabled: true
+  });
+
   const [editingProduct, setEditingProduct] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Admin UIDs (Add your admin user IDs here)
-  const adminUIDs = ['PxUS6BooWHVl4X0reKaMyvOueg62']; // Replace with your admin UID
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Check if user is admin
-        if (adminUIDs.includes(currentUser.uid)) {
-          setUser(currentUser);
-          await loadProducts();
-          await loadContacts();
-        } else {
-          setError('Access denied. Admin only.');
-          setTimeout(() => navigate('/'), 2000);
+        setUser(currentUser);
+        
+        // Check user role from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const role = userDoc.data().role || 'user';
+            setUserRole(role);
+            
+            if (role !== 'admin') {
+              setError('Access denied: Admin only');
+              setTimeout(() => navigate('/'), 3000);
+            } else {
+              await loadProducts();
+              await loadContacts();
+              await loadBannerSettings();
+            }
+          } else {
+            setError('User profile not found');
+            setTimeout(() => navigate('/'), 3000);
+          }
+        } catch (err) {
+          console.error('Error checking user role:', err);
+          setError('Failed to verify admin access');
+          setTimeout(() => navigate('/'), 3000);
         }
       } else {
         navigate('/login');
@@ -95,6 +119,17 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadBannerSettings = async () => {
+    try {
+      const bannerDoc = await getDoc(doc(db, 'settings', 'banner'));
+      if (bannerDoc.exists()) {
+        setBannerSettings(bannerDoc.data());
+      }
+    } catch (err) {
+      console.error('Error loading banner settings:', err);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setProductForm(prev => ({
@@ -116,16 +151,14 @@ const AdminDashboard = () => {
         originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
         discount: productForm.discount ? parseFloat(productForm.discount) : null,
         stock: parseInt(productForm.stock),
-        createdAt: new Date().toISOString(),
+        createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       if (editingProduct) {
-        // Update existing product
         await updateDoc(doc(db, 'products', editingProduct.id), productData);
         setSuccess('Product updated successfully!');
       } else {
-        // Add new product
         await addDoc(collection(db, 'products'), productData);
         setSuccess('Product added successfully!');
       }
@@ -145,13 +178,33 @@ const AdminDashboard = () => {
       });
       setEditingProduct(null);
       
-      // Reload products
       await loadProducts();
-      
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error saving product:', err);
       setError('Failed to save product. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBannerUpdate = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await setDoc(doc(db, 'settings', 'banner'), {
+        ...bannerSettings,
+        updatedAt: new Date().toISOString()
+      });
+
+      setSuccess('Banner updated successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error updating banner:', err);
+      setError('Failed to update banner.');
     } finally {
       setSubmitting(false);
     }
@@ -172,6 +225,7 @@ const AdminDashboard = () => {
       featured: product.featured || false
     });
     setActiveTab('add-product');
+    setSidebarOpen(false);
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -217,6 +271,11 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="admin-dashboard admin-dashboard--loading">
@@ -228,24 +287,50 @@ const AdminDashboard = () => {
     );
   }
 
+  if (userRole !== 'admin') {
+    return (
+      <div className="admin-dashboard__error-page">
+        <i className="fas fa-shield-alt"></i>
+        <h2>Access Denied</h2>
+        <p>{error || 'You do not have permission to access this page.'}</p>
+        <button 
+          onClick={() => navigate('/')}
+          className="admin-dashboard__error-btn"
+        >
+          <i className="fas fa-home"></i>
+          Return to Home
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard__container">
         {/* Header */}
         <div className="admin-dashboard__header">
           <div className="admin-dashboard__header-content">
-            <h1>
-              <i className="fas fa-shield-alt"></i>
-              Admin Dashboard
-            </h1>
-            <p>Manage your store</p>
+            <button 
+              className="admin-dashboard__menu-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle menu"
+            >
+              <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
+            </button>
+            <div>
+              <h1>
+                <i className="fas fa-shield-alt"></i>
+                Admin Dashboard
+              </h1>
+              <p>Manage your store</p>
+            </div>
           </div>
           <button 
             className="admin-dashboard__back-btn"
             onClick={() => navigate('/')}
           >
             <i className="fas fa-home"></i>
-            Back to Store
+            <span>Back to Store</span>
           </button>
         </div>
 
@@ -254,6 +339,7 @@ const AdminDashboard = () => {
           <div className="admin-dashboard__message admin-dashboard__message--success">
             <i className="fas fa-check-circle"></i>
             <span>{success}</span>
+            <button onClick={() => setSuccess('')} className="admin-dashboard__message-close">×</button>
           </div>
         )}
 
@@ -261,31 +347,39 @@ const AdminDashboard = () => {
           <div className="admin-dashboard__message admin-dashboard__message--error">
             <i className="fas fa-exclamation-circle"></i>
             <span>{error}</span>
+            <button onClick={() => setError('')} className="admin-dashboard__message-close">×</button>
           </div>
         )}
 
         <div className="admin-dashboard__content">
           {/* Sidebar Navigation */}
-          <aside className="admin-dashboard__sidebar">
+          <aside className={`admin-dashboard__sidebar ${sidebarOpen ? 'admin-dashboard__sidebar--open' : ''}`}>
             <nav className="admin-dashboard__nav">
               <button
                 className={`admin-dashboard__nav-item ${activeTab === 'add-product' ? 'admin-dashboard__nav-item--active' : ''}`}
-                onClick={() => setActiveTab('add-product')}
+                onClick={() => handleTabChange('add-product')}
               >
                 <i className="fas fa-plus-circle"></i>
                 <span>{editingProduct ? 'Edit Product' : 'Add Product'}</span>
               </button>
               <button
                 className={`admin-dashboard__nav-item ${activeTab === 'products' ? 'admin-dashboard__nav-item--active' : ''}`}
-                onClick={() => setActiveTab('products')}
+                onClick={() => handleTabChange('products')}
               >
                 <i className="fas fa-box"></i>
                 <span>All Products</span>
                 <span className="admin-dashboard__badge">{products.length}</span>
               </button>
               <button
+                className={`admin-dashboard__nav-item ${activeTab === 'banner' ? 'admin-dashboard__nav-item--active' : ''}`}
+                onClick={() => handleTabChange('banner')}
+              >
+                <i className="fas fa-bullhorn"></i>
+                <span>Banner Settings</span>
+              </button>
+              <button
                 className={`admin-dashboard__nav-item ${activeTab === 'contacts' ? 'admin-dashboard__nav-item--active' : ''}`}
-                onClick={() => setActiveTab('contacts')}
+                onClick={() => handleTabChange('contacts')}
               >
                 <i className="fas fa-envelope"></i>
                 <span>Contact Messages</span>
@@ -297,6 +391,14 @@ const AdminDashboard = () => {
               </button>
             </nav>
           </aside>
+
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div 
+              className="admin-dashboard__overlay"
+              onClick={() => setSidebarOpen(false)}
+            ></div>
+          )}
 
           {/* Main Content */}
           <main className="admin-dashboard__main">
@@ -423,6 +525,11 @@ const AdminDashboard = () => {
                         required
                         placeholder="https://example.com/image.jpg"
                       />
+                      {productForm.image && (
+                        <div className="product-form__image-preview">
+                          <img src={productForm.image} alt="Preview" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="product-form__group product-form__group--full">
@@ -508,14 +615,14 @@ const AdminDashboard = () => {
                     <p>Add your first product to get started!</p>
                     <button 
                       className="product-form__btn product-form__btn--primary"
-                      onClick={() => setActiveTab('add-product')}
+                      onClick={() => handleTabChange('add-product')}
                     >
                       Add Product
                     </button>
                   </div>
                 ) : (
-                  <div className="products-table">
-                    <table>
+                  <div className="products-table-wrapper">
+                    <table className="products-table">
                       <thead>
                         <tr>
                           <th>Image</th>
@@ -530,33 +637,33 @@ const AdminDashboard = () => {
                       <tbody>
                         {products.map(product => (
                           <tr key={product.id}>
-                            <td>
+                            <td data-label="Image">
                               <img 
                                 src={product.image} 
                                 alt={product.title}
                                 className="products-table__image"
                               />
                             </td>
-                            <td>{product.title}</td>
-                            <td>
+                            <td data-label="Title">{product.title}</td>
+                            <td data-label="Category">
                               <span className="products-table__category">
                                 {product.category}
                               </span>
                             </td>
-                            <td>₹{product.price}</td>
-                            <td>
+                            <td data-label="Price">₹{product.price.toLocaleString()}</td>
+                            <td data-label="Stock">
                               <span className={`products-table__stock ${product.stock < 10 ? 'products-table__stock--low' : ''}`}>
                                 {product.stock}
                               </span>
                             </td>
-                            <td>
+                            <td data-label="Badge">
                               {product.badge && (
                                 <span className={`products-table__badge products-table__badge--${product.badge.toLowerCase()}`}>
                                   {product.badge}
                                 </span>
                               )}
                             </td>
-                            <td>
+                            <td data-label="Actions">
                               <div className="products-table__actions">
                                 <button
                                   className="products-table__btn products-table__btn--edit"
@@ -580,6 +687,78 @@ const AdminDashboard = () => {
                     </table>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Banner Settings Tab */}
+            {activeTab === 'banner' && (
+              <div className="admin-dashboard__card">
+                <h2>Banner Settings</h2>
+                <p className="admin-dashboard__description">
+                  Manage the promotional banner that appears at the top of your website
+                </p>
+                
+                <form onSubmit={handleBannerUpdate} className="banner-form">
+                  <div className="banner-form__preview">
+                    <div className="banner-form__preview-label">Preview:</div>
+                    <div className="banner-form__preview-banner">
+                      <div className="banner-form__preview-content">
+                        <span>
+                          {bannerSettings.text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          {bannerSettings.text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                          {bannerSettings.text}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="product-form__group">
+                    <label htmlFor="bannerText">Banner Text *</label>
+                    <input
+                      type="text"
+                      id="bannerText"
+                      value={bannerSettings.text}
+                      onChange={(e) => setBannerSettings({...bannerSettings, text: e.target.value})}
+                      required
+                      placeholder="Enter banner message"
+                      maxLength="100"
+                    />
+                    <small className="banner-form__char-count">
+                      {bannerSettings.text.length}/100 characters
+                    </small>
+                  </div>
+
+                  <div className="product-form__group">
+                    <label className="product-form__checkbox">
+                      <input
+                        type="checkbox"
+                        checked={bannerSettings.enabled}
+                        onChange={(e) => setBannerSettings({...bannerSettings, enabled: e.target.checked})}
+                      />
+                      <span>Enable Banner (Show on website)</span>
+                    </label>
+                  </div>
+
+                  <div className="product-form__actions">
+                    <button 
+                      type="submit" 
+                      className="product-form__btn product-form__btn--primary"
+                      disabled={submitting}
+                    >
+                      {submitting ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i>
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-save"></i>
+                          Update Banner
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
 

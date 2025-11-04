@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { CartProvider } from "./components/context/CartContext";
 import "./App.scss";
 
-// 💤 Lazy-loaded components
+// 💤 Lazy-loaded components for better performance
 const Header = lazy(() => import("./components/Header/Header"));
 const Footer = lazy(() => import("./components/Footer/Footer"));
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -16,7 +16,7 @@ const Login = lazy(() => import("./pages/Login/Login"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard/AdminDashboard"));
 
-// Loading component
+// 🌀 Loading component
 const LoadingSpinner = () => (
   <div className="loading-spinner">
     <div className="spinner">
@@ -26,7 +26,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// 404 Not Found Page
+// 🚫 404 Not Found Page
 const NotFound = () => (
   <div className="not-found">
     <div className="not-found__content">
@@ -41,7 +41,7 @@ const NotFound = () => (
   </div>
 );
 
-// Main Layout with Header and Footer
+// 🧱 Layout wrapper for Header + Footer pages
 const MainLayout = ({ children }) => (
   <>
     <Header />
@@ -57,10 +57,11 @@ function App() {
         <div className="App">
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
-              {/* Admin route without Header/Footer */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              
-              {/* Main routes with Header/Footer */}
+
+              {/* ============================================
+                  CUSTOMER ROUTES (Public pages)
+                  ============================================ */}
+              <Route path="/admin" element={<MainLayout><AdminDashboard /></MainLayout>} />
               <Route path="/" element={<MainLayout><Home /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/cart" element={<MainLayout><CartPage /></MainLayout>} />
@@ -69,8 +70,10 @@ function App() {
               <Route path="/quick-view" element={<MainLayout><QuickView /></MainLayout>} />
               <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
               <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-              
-              {/* 404 Not Found */}
+
+              {/* ============================================
+                  ERROR HANDLING
+                  ============================================ */}
               <Route path="/404" element={<MainLayout><NotFound /></MainLayout>} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

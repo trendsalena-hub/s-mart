@@ -8,7 +8,7 @@ import './Profile.scss';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); // Track admin status
+  const [userRole, setUserRole] = useState('user'); // Default role: 'user'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -33,24 +33,16 @@ const Profile = () => {
       country: 'India'
     },
     dateOfBirth: '',
-    gender: ''
+    gender: '',
+    role: 'user' // Store role in profile
   });
 
   const navigate = useNavigate();
-
-  // Admin UIDs - Add your admin user IDs here
-  const adminUIDs = ['PxUS6BooWHVl4X0reKaMyvOueg62']; // Replace with your admin UID
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        
-        // Check if user is admin
-        if (adminUIDs.includes(currentUser.uid)) {
-          setIsAdmin(true);
-        }
-        
         await loadUserProfile(currentUser.uid);
         await loadOrders(currentUser.uid);
         await loadWishlist(currentUser.uid);
@@ -71,8 +63,14 @@ const Profile = () => {
       if (userDoc.exists()) {
         const data = userDoc.data();
         setProfileData(data);
+        
+        // Set user role from database (default to 'user' if not set)
+        const role = data.role || 'user';
+        setUserRole(role);
       } else {
+        // New user - create profile with default 'user' role
         setIsEditing(true);
+        setUserRole('user');
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -191,6 +189,7 @@ const Profile = () => {
         ...profileData,
         phoneNumber: user.phoneNumber,
         uid: user.uid,
+        role: profileData.role || 'user', // Preserve role
         updatedAt: new Date().toISOString()
       };
 
@@ -229,6 +228,9 @@ const Profile = () => {
     setSuccess(`Coupon code ${code} copied!`);
     setTimeout(() => setSuccess(''), 2000);
   };
+
+  // Check if user is admin
+  const isAdmin = userRole === 'admin';
 
   if (loading) {
     return (
@@ -326,7 +328,7 @@ const Profile = () => {
                 <span>Help Centre</span>
               </button>
 
-              {/* Admin Quick Link in Sidebar */}
+              {/* Admin Quick Link in Sidebar - Only show if admin */}
               {isAdmin && (
                 <button
                   className="profile__nav-item profile__nav-item--admin"
@@ -339,7 +341,7 @@ const Profile = () => {
             </nav>
           </aside>
 
-          {/* Main Content Area - Keep existing code */}
+          {/* Main Content Area */}
           <main className="profile__main">
             <div className="profile__card">
               {/* Messages */}
@@ -540,8 +542,9 @@ const Profile = () => {
                 </form>
               )}
 
-              {/* Keep all other tabs (Orders, Wishlist, Coupons, Help) as they were */}
-              {/* ... rest of the component code remains the same ... */}
+              {/* Rest of the tabs remain the same - Orders, Wishlist, Coupons, Help */}
+              {/* I'll keep them as they were in your original code */}
+              
               {activeTab === 'orders' && (
                 <div className="orders-section">
                   <h3 className="section-title">My Orders</h3>
