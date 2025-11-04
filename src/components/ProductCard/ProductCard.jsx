@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { auth, db } from '../../firebase/config';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import './ProductCard.scss';
 
 const ProductCard = ({ 
+  id,
   image, 
   title, 
   price, 
@@ -12,13 +16,124 @@ const ProductCard = ({
   badge,
   onQuickView 
 }) => {
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart(); // Get cartItems from context
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isInCart, setIsInCart] = useState(false); // Track cart status
+  const [loading, setLoading] = useState(false);
+  
   const hasDiscount = originalPrice && originalPrice > price;
+  const productId = id || Math.random().toString(36).substr(2, 9);
 
+  // Listen to auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        await checkWishlistStatus(currentUser.uid);
+      } else {
+        setIsInWishlist(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [productId]);
+
+  // Check if product is in cart whenever cartItems changes
+  useEffect(() => {
+    const inCart = cartItems.some(item => item.id === productId);
+    setIsInCart(inCart);
+  }, [cartItems, productId]);
+
+  // Check if product is in wishlist
+  const checkWishlistStatus = async (uid) => {
+    try {
+      const wishlistDoc = await getDoc(doc(db, 'wishlists', uid));
+      if (wishlistDoc.exists()) {
+        const wishlistItems = wishlistDoc.data().items || [];
+        const inWishlist = wishlistItems.some(item => item.id === productId);
+        setIsInWishlist(inWishlist);
+      }
+    } catch (error) {
+      console.error('Error checking wishlist:', error);
+    }
+  };
+
+  // Add/Remove from wishlist
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      const shouldLogin = window.confirm('Please login to add items to wishlist. Go to login?');
+      if (shouldLogin) {
+        navigate('/login');
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const wishlistRef = doc(db, 'wishlists', user.uid);
+      const wishlistDoc = await getDoc(wishlistRef);
+
+      const productData = {
+        id: productId,
+        image,
+        title,
+        price,
+        originalPrice,
+        discount,
+        badge,
+        addedAt: new Date().toISOString()
+      };
+
+      if (wishlistDoc.exists()) {
+        const wishlistItems = wishlistDoc.data().items || [];
+        const productIndex = wishlistItems.findIndex(item => item.id === productId);
+
+        if (productIndex > -1) {
+          wishlistItems.splice(productIndex, 1);
+          await updateDoc(wishlistRef, { 
+            items: wishlistItems,
+            updatedAt: new Date().toISOString()
+          });
+          setIsInWishlist(false);
+          showNotification(`${title} removed from wishlist`, 'info');
+        } else {
+          await updateDoc(wishlistRef, {
+            items: arrayUnion(productData),
+            updatedAt: new Date().toISOString()
+          });
+          setIsInWishlist(true);
+          showNotification(`${title} added to wishlist!`, 'success');
+        }
+      } else {
+        await setDoc(wishlistRef, {
+          userId: user.uid,
+          items: [productData],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        setIsInWishlist(true);
+        showNotification(`${title} added to wishlist!`, 'success');
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      showNotification('Failed to update wishlist', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add to cart
   const handleAddToCart = () => {
+    if (isInCart) {
+      // If already in cart, navigate to cart page
+      navigate('/cart');
+      return;
+    }
+
     const product = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: productId,
       image,
       title,
       price,
@@ -26,40 +141,43 @@ const ProductCard = ({
       discount,
       badge
     };
-    addToCart(product);
     
-    // Show cart notification
-    const event = new CustomEvent('cartNotification', { 
-      detail: { 
-        message: `${title} added to cart!`,
-        type: 'success'
-      } 
-    });
-    window.dispatchEvent(event);
+    addToCart(product);
+    showNotification(`${title} added to cart!`, 'success');
   };
 
   const handleBuyNow = () => {
     const product = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: productId,
       image,
       title,
       price,
       originalPrice,
       discount,
-      badge
+      badge,
+      quantity: 1
     };
-    
+
+    if (!user) {
+      sessionStorage.setItem('pendingPurchase', JSON.stringify(product));
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
     navigate('/checkout', { 
-      state: { product } 
+      state: { 
+        products: [product],
+        userId: user.uid 
+      } 
     });
   };
 
   const handleQuickView = () => {
     if (onQuickView) {
-      onQuickView();  // ✅ Allows parent component to override
+      onQuickView();
     } else {
-      // ✅ Creates product object with all necessary data
       const product = {
+        id: productId,
         image,
         title,
         price,
@@ -68,13 +186,18 @@ const ProductCard = ({
         badge
       };
       
-      // ✅ Navigates to /quick-view route with product data
       navigate('/quick-view', { 
-        state: { product }  // ✅ Passes data through state
+        state: { product }
       });
     }
   };
 
+  const showNotification = (message, type) => {
+    const event = new CustomEvent('cartNotification', { 
+      detail: { message, type } 
+    });
+    window.dispatchEvent(event);
+  };
 
   return (
     <div className="product-card">
@@ -101,6 +224,22 @@ const ProductCard = ({
           </span>
         )}
 
+        {/* Wishlisted Label */}
+        {isInWishlist && (
+          <span className="product-card__wishlisted-label">
+            <i className="fas fa-heart"></i>
+            Wishlisted
+          </span>
+        )}
+
+        {/* In Cart Label */}
+        {isInCart && (
+          <span className="product-card__in-cart-label">
+            <i className="fas fa-check-circle"></i>
+            Added
+          </span>
+        )}
+
         {/* Hover Actions */}
         <div className="product-card__actions">
           <button 
@@ -112,19 +251,25 @@ const ProductCard = ({
             <i className="fas fa-eye"></i>
           </button>
           <button 
-            className="product-card__action-btn product-card__action-btn--cart"
+            className={`product-card__action-btn product-card__action-btn--cart ${
+              isInCart ? 'product-card__action-btn--in-cart' : ''
+            }`}
             onClick={handleAddToCart}
-            aria-label="Add to cart"
-            title="Add to cart"
+            aria-label={isInCart ? 'Go to cart' : 'Add to cart'}
+            title={isInCart ? 'Go to cart' : 'Add to cart'}
           >
-            <i className="fas fa-shopping-cart"></i>
+            <i className={`fas ${isInCart ? 'fa-check' : 'fa-shopping-cart'}`}></i>
           </button>
           <button 
-            className="product-card__action-btn product-card__action-btn--wishlist"
-            aria-label="Add to wishlist"
-            title="Add to wishlist"
+            className={`product-card__action-btn product-card__action-btn--wishlist ${
+              isInWishlist ? 'product-card__action-btn--active' : ''
+            }`}
+            onClick={handleWishlistToggle}
+            disabled={loading}
+            aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            <i className="fas fa-heart"></i>
+            <i className={`fas fa-heart ${loading ? 'fa-spin' : ''}`}></i>
           </button>
         </div>
       </div>
@@ -165,11 +310,11 @@ const ProductCard = ({
           </button>
 
           <button 
-            className="product-card__cart-btn"
+            className={`product-card__cart-btn ${isInCart ? 'product-card__cart-btn--added' : ''}`}
             onClick={handleAddToCart}
           >
-            <i className="fas fa-shopping-bag"></i>
-            Add to Cart
+            <i className={`fas ${isInCart ? 'fa-check-circle' : 'fa-shopping-bag'}`}></i>
+            {isInCart ? 'Added' : 'Add to Cart'}
           </button>
         </div>
       </div>

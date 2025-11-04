@@ -1,4 +1,6 @@
 // Header.scss
+@use "sass:color";
+
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 // Color Variables
@@ -11,6 +13,7 @@ $text-dark: #333333;
 $text-light: #666666;
 $white: #ffffff;
 $black: #000000;
+$success-green: #51cf66;
 
 // Transition Variables
 $transition-fast: 0.3s ease;
@@ -347,6 +350,13 @@ $transition-slow: 0.6s ease;
       &:hover {
         border-color: $gold;
       }
+
+      &--active {
+        background: linear-gradient(135deg, lighten($gold, 30%), lighten($gold, 25%));
+        border-color: $gold;
+        color: $gold;
+        font-weight: 600;
+      }
     }
   }
   
@@ -372,6 +382,7 @@ $transition-slow: 0.6s ease;
     
     i {
       font-size: 1.2rem;
+      transition: all $transition-fast;
     }
     
     @media (max-width: 992px) {
@@ -383,6 +394,53 @@ $transition-slow: 0.6s ease;
         width: 20px;
         text-align: center;
       }
+    }
+  }
+
+  // Profile Button Styles
+  &__profile-btn {
+    position: relative;
+
+    &--active {
+      background: lighten($gold, 30%);
+      color: $gold;
+
+      i {
+        font-size: 1.3rem;
+        color: $gold;
+      }
+
+      &:hover {
+        background: lighten($gold, 25%);
+      }
+    }
+  }
+
+  &__online-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: $success-green;
+    border: 2px solid $white;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba($success-green, 0.6);
+    animation: pulse-indicator 2s infinite;
+  }
+
+  &__profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: $gold;
+
+    @media (max-width: 992px) {
+      max-width: 200px;
+      font-size: 15px;
     }
   }
   
@@ -404,6 +462,7 @@ $transition-slow: 0.6s ease;
       justify-content: center;
       font-weight: 600;
       box-shadow: 0 2px 6px rgba($gold, 0.4);
+      animation: bounce-in 0.5s ease;
     }
   }
   
@@ -466,6 +525,24 @@ $transition-slow: 0.6s ease;
       }
     }
   }
+
+  // Overlay for mobile menu
+  &__overlay {
+    display: none;
+    
+    @media (max-width: 992px) {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba($black, 0.5);
+      z-index: 999;
+      backdrop-filter: blur(2px);
+      animation: fadeIn 0.3s ease;
+    }
+  }
 }
 
 // Animations
@@ -486,6 +563,38 @@ $transition-slow: 0.6s ease;
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pulse-indicator {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -552,7 +661,8 @@ $transition-slow: 0.6s ease;
 }
 
 // Add padding to body to account for fixed header
-body { // Default header height (banner + main)
+body {
+  padding-top: 100px; // Default header height (banner + main)
   
   @media (max-width: 992px) {
     padding-top: 80px; // Mobile header height

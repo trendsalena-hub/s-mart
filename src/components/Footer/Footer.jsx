@@ -126,13 +126,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Follow Us Badge */}
-      <div className="footer__badge">
-        <p className="footer__badge-text">
-          Follow us on<br />
-          <strong>@alenatrends_fashion</strong>
-        </p>
-      </div>
     </footer>
   );
 };

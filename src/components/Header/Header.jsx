@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { auth } from '../../firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import logo from '../../assets/Alena-trends.png';
 import './Header.scss';
 
@@ -10,10 +12,20 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [user, setUser] = useState(null);
   
-  // Get cart functionality from context
   const { getCartItemsCount } = useCart();
   const cartCount = getCartItemsCount();
+  const navigate = useNavigate();
+
+  // Listen to authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +65,15 @@ const Header = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
+    closeMobileMenu();
   };
 
   return (
@@ -100,6 +121,7 @@ const Header = () => {
             {/* Navigation */}
             <nav className={`header__nav ${isMobileMenuOpen ? 'header__nav--open' : ''}`}>
               <ul className="header__nav-list">
+                <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
                 <li><Link to="/women" onClick={closeMobileMenu}>Collections</Link></li>
                 <li><Link to="/new-arrivals" onClick={closeMobileMenu}>New Arrivals</Link></li>
                 <li><Link to="/sale" onClick={closeMobileMenu}>Sale</Link></li>
@@ -120,10 +142,25 @@ const Header = () => {
                   <i className="fas fa-search"></i>
                   Search
                 </button>
-                <Link to="/account" className="header__action-btn" aria-label="Account">
-                  <i className="fas fa-user"></i>
-                  Account
-                </Link>
+                <button 
+                  className={`header__action-btn ${user ? 'header__action-btn--active' : ''}`}
+                  onClick={handleProfileClick}
+                  aria-label={user ? 'My Profile' : 'Login'}
+                >
+                  {user ? (
+                    <>
+                      <i className="fas fa-user-circle"></i>
+                      <span className="header__profile-name">
+                        {user.displayName || 'Profile'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-user"></i>
+                      Login
+                    </>
+                  )}
+                </button>
                 <Link to="/cart" className="header__action-btn header__cart" aria-label="Cart">
                   <i className="fas fa-shopping-cart"></i>
                   Cart
@@ -143,9 +180,20 @@ const Header = () => {
               >
                 <i className="fas fa-search"></i>
               </button>
-              <Link to="/account" className="header__action-btn" aria-label="Account">
-                <i className="fas fa-user"></i>
-              </Link>
+              <button 
+                className={`header__action-btn header__profile-btn ${user ? 'header__profile-btn--active' : ''}`}
+                onClick={handleProfileClick}
+                aria-label={user ? 'My Profile' : 'Login'}
+              >
+                {user ? (
+                  <>
+                    <i className="fas fa-user-circle"></i>
+                    {user && <span className="header__online-indicator"></span>}
+                  </>
+                ) : (
+                  <i className="fas fa-user"></i>
+                )}
+              </button>
               <Link to="/cart" className="header__action-btn header__cart" aria-label="Cart">
                 <i className="fas fa-shopping-cart"></i>
                 {cartCount > 0 && (
@@ -178,6 +226,11 @@ const Header = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="header__overlay" onClick={closeMobileMenu}></div>
+      )}
     </header>
   );
 };

@@ -1,4 +1,5 @@
 // Cart Page Styles - Mobile First Approach
+@use "sass:color";
 
 // Variables
 $primary-color: #8B4513;
@@ -64,7 +65,7 @@ $transition: all 0.3s ease;
       transition: $transition;
 
       &:hover {
-        background: darken($primary-color, 10%);
+        background: color.adjust($primary-color, $lightness: -10%);
       }
     }
   }
@@ -441,7 +442,7 @@ $transition: all 0.3s ease;
     margin-top: 20px;
 
     &:hover {
-      background: darken($primary-color, 10%);
+      background: color.adjust($primary-color, $lightness: -10%);
     }
   }
 

@@ -1,0 +1,248 @@
+// Login Page Styles - Mobile First Approach
+
+// Variables
+$primary-color: #c9a86a;
+$secondary-color: #f5f5f5;
+$text-color: #333;
+$light-text: #666;
+$white: #fff;
+$error-color: #ff6b6b;
+$success-color: #51cf66;
+$transition: all 0.3s ease;
+
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f9f5f0 0%, #e8dcc8 100%);
+  padding: 20px;
+
+  &__container {
+    width: 100%;
+    max-width: 450px;
+  }
+
+  &__card {
+    background: $white;
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 40px rgba($primary-color, 0.15);
+
+    @media (max-width: 576px) {
+      padding: 30px 20px;
+    }
+  }
+
+  &__logo {
+    text-align: center;
+    margin-bottom: 30px;
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: $primary-color;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+
+      @media (max-width: 576px) {
+        font-size: 28px;
+      }
+    }
+  }
+
+  &__tagline {
+    color: $light-text;
+    font-size: 14px;
+    margin: 0;
+  }
+
+  &__content {
+    margin-bottom: 30px;
+  }
+
+  &__title {
+    font-size: 24px;
+    font-weight: 600;
+    color: $text-color;
+    margin-bottom: 8px;
+    text-align: center;
+
+    @media (max-width: 576px) {
+      font-size: 20px;
+    }
+  }
+
+  &__subtitle {
+    color: $light-text;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  &__error {
+    background: rgba($error-color, 0.1);
+    border: 1px solid rgba($error-color, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: $error-color;
+    font-size: 14px;
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: $text-color;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: $transition;
+      font-family: inherit;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+      }
+
+      &:disabled {
+        background: $secondary-color;
+        cursor: not-allowed;
+      }
+
+      &::placeholder {
+        color: #aaa;
+      }
+    }
+  }
+
+  &__phone-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__country-code {
+    padding: 14px 16px;
+    background: $secondary-color;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-weight: 600;
+    color: $text-color;
+    font-size: 16px;
+  }
+
+  &__btn {
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 16px;
+    }
+
+    &--primary {
+      background: linear-gradient(135deg, $primary-color, darken($primary-color, 10%));
+      color: $white;
+      box-shadow: 0 4px 15px rgba($primary-color, 0.3);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba($primary-color, 0.4);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+    }
+
+    &--secondary {
+      background: transparent;
+      color: $primary-color;
+      border: 2px solid $primary-color;
+
+      &:hover:not(:disabled) {
+        background: rgba($primary-color, 0.1);
+      }
+    }
+  }
+
+  &__features {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  &__feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: $light-text;
+    font-size: 12px;
+
+    i {
+      font-size: 20px;
+      color: $primary-color;
+    }
+  }
+}
+
+// reCAPTCHA container styling
+#recaptcha-container {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  
+  > div {
+    margin: 0 auto;
+  }
+}
+.login__recaptcha {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    min-height: 78px; // reCAPTCHA height
+    
+    > div {
+      margin: 0 auto;
+    }
+  }
