@@ -243,9 +243,9 @@ const ProductCard = ({
         sku
       };
       
-      navigate('/quick-view', { 
-        state: { product }
-      });
+      navigate(`/quick-view`, { 
+      state: { productId } 
+    });
     }
   };
 

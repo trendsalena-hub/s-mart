@@ -22,11 +22,18 @@ body {
 
 .main-content {
   flex: 1;
-  padding-top: 20px; // Account for fixed header
+  padding-top: 115px; // Account for banner + header
+
+
+  @media (max-width: 768px) {
+    padding-top: 95px;
+    padding-bottom: 50px;
+  }
 }
 
 // Loading Spinner Styles
 .loading-spinner {
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -36,7 +43,7 @@ body {
 
   .spinner {
     font-size: 3rem;
-    color: #e8b4c9;
+    color: #c9a86a;
     margin-bottom: 20px;
   }
 
@@ -58,16 +65,34 @@ body {
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   border-left: 4px solid #4ecdc4;
   z-index: 1000;
+  display: flex;
   align-items: center;
   gap: 10px;
   animation: slideInRight 0.3s ease;
 
+  @media (max-width: 968px) {
+    top: 80px;
+    right: 10px;
+    left: 10px;
+    text-align: center;
+    justify-content: center;
+    z-index: 999; // Below header but above content
+  }
+
   &.success {
-    border-left-color: #4ecdc4;
+    border-left-color: #4CAF50;
   }
 
   &.error {
     border-left-color: #ff6b6b;
+  }
+
+  &.warning {
+    border-left-color: #ffa726;
+  }
+
+  &.info {
+    border-left-color: #2196f3;
   }
 
   &__icon {
@@ -76,6 +101,7 @@ body {
 
   &__message {
     font-weight: 500;
+    color: #333;
   }
 }
 
@@ -90,12 +116,21 @@ body {
   }
 }
 
-// Responsive adjustments
-@media (max-width: 768px) {
-  .main-content {
-    padding-top: 25px;
+// Ensure content doesn't hide behind mobile nav
+@media (max-width: 968px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom); // For notched phones
   }
 
+  // Add extra padding to sections that might be at the bottom
+  section:last-child,
+  footer {
+    padding-bottom: 75px !important;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
   .loading-spinner {
     .spinner {
       font-size: 2.5rem;
@@ -105,11 +140,16 @@ body {
       font-size: 1rem;
     }
   }
+}
 
-  .cart-notification {
-    top: 80px;
-    right: 10px;
-    left: 10px;
-    text-align: center;
+// Smooth scroll behavior
+html {
+  scroll-behavior: smooth;
+}
+
+// Hide scrollbar for mobile bottom nav
+@media (max-width: 968px) {
+  body {
+    overflow-x: hidden;
   }
 }
