@@ -156,7 +156,7 @@ const Header = () => {
               <nav className={`header__nav ${isMobileMenuOpen ? 'header__nav--open' : ''}`}>
                 <ul className="header__nav-list">
                   <li><Link to="/" onClick={closeMobileMenu}>Home</Link></li>
-                  <li><Link to="/women" onClick={closeMobileMenu}>Collections</Link></li>
+                  <li><Link to="/collections" onClick={closeMobileMenu}>Collections</Link></li>
                   <li><Link to="/new-arrivals" onClick={closeMobileMenu}>New Arrivals</Link></li>
                   <li><Link to="/sale" onClick={closeMobileMenu}>Sale</Link></li>
                   <li><Link to="/about" onClick={closeMobileMenu}>About Us</Link></li>

@@ -15,6 +15,7 @@ const QuickView = lazy(() => import("./pages/QuickView/QuickView"));
 const Login = lazy(() => import("./pages/Login/Login"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard/AdminDashboard"));
+const Collections = lazy(() => import("./pages/Collections/Collections"));
 
 // 🌀 Loading component
 const LoadingSpinner = () => (
@@ -57,22 +58,30 @@ function App() {
         <div className="App">
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
+              {/* ============================================
+                  ADMIN ROUTES
+                  ============================================ */}
+              <Route path="/admin/*" element={<MainLayout><AdminDashboard /></MainLayout>} />
 
               {/* ============================================
                   CUSTOMER ROUTES (Public pages)
                   ============================================ */}
-              <Route path="/admin" element={<MainLayout><AdminDashboard /></MainLayout>} />
               <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+              
+              {/* Collections Route - Single route for now */}
+              <Route path="/collections" element={<MainLayout><Collections /></MainLayout>} />
+              
+              {/* Other Pages */}
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-              <Route path="/cart" element={<MainLayout><CartPage /></MainLayout>} />
               <Route path="/about" element={<MainLayout><AboutUs /></MainLayout>} />
+              <Route path="/cart" element={<MainLayout><CartPage /></MainLayout>} />
               <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
               <Route path="/quick-view" element={<MainLayout><QuickView /></MainLayout>} />
               <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
               <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
 
               {/* ============================================
-                  ERROR HANDLING
+                  ERROR HANDLING (MUST BE LAST)
                   ============================================ */}
               <Route path="/404" element={<MainLayout><NotFound /></MainLayout>} />
               <Route path="*" element={<Navigate to="/404" replace />} />

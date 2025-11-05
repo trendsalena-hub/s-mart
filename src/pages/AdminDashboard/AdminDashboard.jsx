@@ -20,7 +20,7 @@ const AdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('user');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('add-product'); // add-product, products, contacts, banner
+  const [activeTab, setActiveTab] = useState('add-product');
   const [products, setProducts] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [success, setSuccess] = useState('');
@@ -28,18 +28,24 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Product Form State
+  // Enhanced Product Form State with Multiple Images and New Fields
   const [productForm, setProductForm] = useState({
     title: '',
     price: '',
     originalPrice: '',
     discount: '',
-    image: '',
+    images: [''], // Multiple images
     badge: '',
     category: '',
     description: '',
     stock: '',
-    featured: false
+    featured: false,
+    sizes: ['S', 'M', 'L', 'XL'], // Default sizes
+    colors: ['Black', 'White'], // Default colors
+    material: '',
+    brand: '',
+    tags: '',
+    sku: ''
   });
 
   // Banner Settings State
@@ -56,7 +62,6 @@ const AdminDashboard = () => {
       if (currentUser) {
         setUser(currentUser);
         
-        // Check user role from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
@@ -130,6 +135,66 @@ const AdminDashboard = () => {
     }
   };
 
+  // Image Management Functions
+  const handleAddImageField = () => {
+    setProductForm(prev => ({
+      ...prev,
+      images: [...prev.images, '']
+    }));
+  };
+
+  const handleRemoveImageField = (index) => {
+    if (productForm.images.length > 1) {
+      setProductForm(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleImageChange = (index, value) => {
+    setProductForm(prev => {
+      const newImages = [...prev.images];
+      newImages[index] = value;
+      return { ...prev, images: newImages };
+    });
+  };
+
+  // Size Management
+  const handleSizeToggle = (size) => {
+    setProductForm(prev => ({
+      ...prev,
+      sizes: prev.sizes.includes(size)
+        ? prev.sizes.filter(s => s !== size)
+        : [...prev.sizes, size]
+    }));
+  };
+
+  // Color Management
+  const handleColorChange = (index, value) => {
+    setProductForm(prev => {
+      const newColors = [...prev.colors];
+      newColors[index] = value;
+      return { ...prev, colors: newColors };
+    });
+  };
+
+  const handleAddColor = () => {
+    setProductForm(prev => ({
+      ...prev,
+      colors: [...prev.colors, '']
+    }));
+  };
+
+  const handleRemoveColor = (index) => {
+    if (productForm.colors.length > 1) {
+      setProductForm(prev => ({
+        ...prev,
+        colors: prev.colors.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setProductForm(prev => ({
@@ -151,6 +216,11 @@ const AdminDashboard = () => {
         originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
         discount: productForm.discount ? parseFloat(productForm.discount) : null,
         stock: parseInt(productForm.stock),
+        images: productForm.images.filter(img => img.trim() !== ''),
+        image: productForm.images[0], // Primary image for backward compatibility
+        sizes: productForm.sizes,
+        colors: productForm.colors.filter(c => c.trim() !== ''),
+        tags: productForm.tags ? productForm.tags.split(',').map(t => t.trim()) : [],
         createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -169,12 +239,18 @@ const AdminDashboard = () => {
         price: '',
         originalPrice: '',
         discount: '',
-        image: '',
+        images: [''],
         badge: '',
         category: '',
         description: '',
         stock: '',
-        featured: false
+        featured: false,
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: ['Black', 'White'],
+        material: '',
+        brand: '',
+        tags: '',
+        sku: ''
       });
       setEditingProduct(null);
       
@@ -217,12 +293,18 @@ const AdminDashboard = () => {
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       discount: product.discount ? product.discount.toString() : '',
-      image: product.image,
+      images: product.images && product.images.length > 0 ? product.images : [product.image || ''],
       badge: product.badge || '',
       category: product.category || '',
       description: product.description || '',
       stock: product.stock ? product.stock.toString() : '',
-      featured: product.featured || false
+      featured: product.featured || false,
+      sizes: product.sizes || ['S', 'M', 'L', 'XL'],
+      colors: product.colors || ['Black', 'White'],
+      material: product.material || '',
+      brand: product.brand || '',
+      tags: product.tags ? product.tags.join(', ') : '',
+      sku: product.sku || ''
     });
     setActiveTab('add-product');
     setSidebarOpen(false);
@@ -409,6 +491,7 @@ const AdminDashboard = () => {
                 
                 <form onSubmit={handleSubmitProduct} className="product-form">
                   <div className="product-form__grid">
+                    {/* Basic Information */}
                     <div className="product-form__group">
                       <label htmlFor="title">Product Title *</label>
                       <input
@@ -432,15 +515,15 @@ const AdminDashboard = () => {
                         required
                       >
                         <option value="">Select category</option>
-                        <option value="electronics">Electronics</option>
-                        <option value="fashion">Fashion</option>
-                        <option value="home">Home & Kitchen</option>
-                        <option value="beauty">Beauty</option>
-                        <option value="sports">Sports</option>
-                        <option value="books">Books</option>
+                        <option value="dresses">Dresses</option>
+                        <option value="tops">Tops</option>
+                        <option value="bottoms">Bottoms</option>
+                        <option value="outerwear">Outerwear</option>
+                        <option value="accessories">Accessories</option>
                       </select>
                     </div>
 
+                    {/* Pricing */}
                     <div className="product-form__group">
                       <label htmlFor="price">Price (₹) *</label>
                       <input
@@ -498,6 +581,43 @@ const AdminDashboard = () => {
                       />
                     </div>
 
+                    {/* Additional Fields */}
+                    <div className="product-form__group">
+                      <label htmlFor="brand">Brand</label>
+                      <input
+                        type="text"
+                        id="brand"
+                        name="brand"
+                        value={productForm.brand}
+                        onChange={handleInputChange}
+                        placeholder="Brand name"
+                      />
+                    </div>
+
+                    <div className="product-form__group">
+                      <label htmlFor="sku">SKU</label>
+                      <input
+                        type="text"
+                        id="sku"
+                        name="sku"
+                        value={productForm.sku}
+                        onChange={handleInputChange}
+                        placeholder="Product SKU/Code"
+                      />
+                    </div>
+
+                    <div className="product-form__group">
+                      <label htmlFor="material">Material</label>
+                      <input
+                        type="text"
+                        id="material"
+                        name="material"
+                        value={productForm.material}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Cotton, Polyester"
+                      />
+                    </div>
+
                     <div className="product-form__group">
                       <label htmlFor="badge">Badge</label>
                       <select
@@ -514,24 +634,124 @@ const AdminDashboard = () => {
                       </select>
                     </div>
 
+                    {/* Multiple Images */}
                     <div className="product-form__group product-form__group--full">
-                      <label htmlFor="image">Image URL *</label>
-                      <input
-                        type="url"
-                        id="image"
-                        name="image"
-                        value={productForm.image}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="https://example.com/image.jpg"
-                      />
-                      {productForm.image && (
-                        <div className="product-form__image-preview">
-                          <img src={productForm.image} alt="Preview" />
-                        </div>
-                      )}
+                      <label>Product Images * (First image will be primary)</label>
+                      <div className="image-manager">
+                        {productForm.images.map((image, index) => (
+                          <div key={index} className="image-manager__item">
+                            <div className="image-manager__input-group">
+                              <span className="image-manager__label">
+                                {index === 0 ? '🌟 Primary Image' : `Image ${index + 1}`}
+                              </span>
+                              <input
+                                type="url"
+                                value={image}
+                                onChange={(e) => handleImageChange(index, e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                                required={index === 0}
+                              />
+                              {productForm.images.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="image-manager__remove-btn"
+                                  onClick={() => handleRemoveImageField(index)}
+                                  title="Remove image"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              )}
+                            </div>
+                            {image && (
+                              <div className="image-manager__preview">
+                                <img src={image} alt={`Preview ${index + 1}`} />
+                                {index === 0 && (
+                                  <span className="image-manager__primary-badge">Primary</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="image-manager__add-btn"
+                          onClick={handleAddImageField}
+                        >
+                          <i className="fas fa-plus"></i>
+                          Add Another Image
+                        </button>
+                      </div>
                     </div>
 
+                    {/* Size Selection */}
+                    <div className="product-form__group product-form__group--full">
+                      <label>Available Sizes *</label>
+                      <div className="size-selector">
+                        {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                          <button
+                            key={size}
+                            type="button"
+                            className={`size-selector__btn ${productForm.sizes.includes(size) ? 'size-selector__btn--active' : ''}`}
+                            onClick={() => handleSizeToggle(size)}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                      <small>Click to select/deselect sizes</small>
+                    </div>
+
+                    {/* Colors */}
+                    <div className="product-form__group product-form__group--full">
+                      <label>Available Colors *</label>
+                      <div className="color-manager">
+                        {productForm.colors.map((color, index) => (
+                          <div key={index} className="color-manager__item">
+                            <input
+                              type="text"
+                              value={color}
+                              onChange={(e) => handleColorChange(index, e.target.value)}
+                              placeholder="Enter color name"
+                              required
+                            />
+                            {productForm.colors.length > 1 && (
+                              <button
+                                type="button"
+                                className="color-manager__remove-btn"
+                                onClick={() => handleRemoveColor(index)}
+                                title="Remove color"
+                              >
+                                <i className="fas fa-times"></i>
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="color-manager__add-btn"
+                          onClick={handleAddColor}
+                        >
+                          <i className="fas fa-plus"></i>
+                          Add Color
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="product-form__group product-form__group--full">
+                      <label htmlFor="tags">Tags (comma-separated)</label>
+                      <input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        value={productForm.tags}
+                        onChange={handleInputChange}
+                        placeholder="summer, trending, new-arrival"
+                      />
+                      <small>Separate tags with commas for better searchability</small>
+                    </div>
+
+                    {/* Description */}
                     <div className="product-form__group product-form__group--full">
                       <label htmlFor="description">Description</label>
                       <textarea
@@ -544,6 +764,7 @@ const AdminDashboard = () => {
                       ></textarea>
                     </div>
 
+                    {/* Featured */}
                     <div className="product-form__group product-form__group--full">
                       <label className="product-form__checkbox">
                         <input
@@ -552,7 +773,7 @@ const AdminDashboard = () => {
                           checked={productForm.featured}
                           onChange={handleInputChange}
                         />
-                        <span>Featured Product (Show on homepage)</span>
+                        <span>⭐ Featured Product (Show on homepage)</span>
                       </label>
                     </div>
                   </div>
@@ -586,12 +807,18 @@ const AdminDashboard = () => {
                             price: '',
                             originalPrice: '',
                             discount: '',
-                            image: '',
+                            images: [''],
                             badge: '',
                             category: '',
                             description: '',
                             stock: '',
-                            featured: false
+                            featured: false,
+                            sizes: ['S', 'M', 'L', 'XL'],
+                            colors: ['Black', 'White'],
+                            material: '',
+                            brand: '',
+                            tags: '',
+                            sku: ''
                           });
                         }}
                       >
@@ -639,7 +866,7 @@ const AdminDashboard = () => {
                           <tr key={product.id}>
                             <td data-label="Image">
                               <img 
-                                src={product.image} 
+                                src={product.images ? product.images[0] : product.image} 
                                 alt={product.title}
                                 className="products-table__image"
                               />

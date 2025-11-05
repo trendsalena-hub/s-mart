@@ -1,55 +1,219 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { auth, db } from '../../firebase/config';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useCart } from '../../components/context/CartContext';
 import './QuickView.scss';
 
 const QuickView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   
+  const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  
-  const productImages = product ? [
-    product.image,
-    product.image,
-    product.image,
-    product.image
-  ] : [];
+  // Use product images array or fallback to single image
+  const productImages = product?.images && product.images.length > 0 
+    ? product.images 
+    : product?.image 
+    ? [product.image] 
+    : [];
 
+  // Check authentication
   useEffect(() => {
-    console.log('QuickView mounted, location.state:', location.state);
-    if (location.state?.product) {
-      setProduct(location.state.product);
-      console.log('Product set:', location.state.product);
-    } else {
-      console.log('No product data, redirecting to home');
-      navigate('/');
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser && product) {
+        await checkWishlistStatus(currentUser.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [product]);
+
+  // Load product
+  useEffect(() => {
+    const loadProduct = async () => {
+      setLoading(true);
+      if (location.state?.product) {
+        const prod = location.state.product;
+        setProduct(prod);
+        // Set default selections
+        if (prod.sizes && prod.sizes.length > 0) {
+          setSelectedSize(prod.sizes[0]);
+        }
+        if (prod.colors && prod.colors.length > 0) {
+          setSelectedColor(prod.colors[0]);
+        }
+        setLoading(false);
+      } else if (location.state?.productId) {
+        try {
+          const productDoc = await getDoc(doc(db, 'products', location.state.productId));
+          if (productDoc.exists()) {
+            const prod = { id: productDoc.id, ...productDoc.data() };
+            setProduct(prod);
+            // Set default selections
+            if (prod.sizes && prod.sizes.length > 0) {
+              setSelectedSize(prod.sizes[0]);
+            }
+            if (prod.colors && prod.colors.length > 0) {
+              setSelectedColor(prod.colors[0]);
+            }
+          } else {
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Error fetching product:', error);
+          navigate('/');
+        }
+        setLoading(false);
+      } else {
+        navigate('/');
+      }
+    };
+    loadProduct();
   }, [location.state, navigate]);
 
-  if (!product) {
-    return (
-      <div className="quick-view" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-            <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px', color: '#e8b4c9', marginBottom: '20px' }}></i>
-            <p style={{ fontSize: '16px', color: '#666' }}>Loading product...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Check if in cart
+  useEffect(() => {
+    if (product) {
+      const inCart = cartItems.some(item => item.id === product.id);
+      setIsInCart(inCart);
+    }
+  }, [cartItems, product]);
 
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  // Check wishlist status
+  const checkWishlistStatus = async (uid) => {
+    if (!product) return;
+    try {
+      const wishlistDoc = await getDoc(doc(db, 'wishlists', uid));
+      if (wishlistDoc.exists()) {
+        const wishlistItems = wishlistDoc.data().items || [];
+        const inWishlist = wishlistItems.some(item => item.id === product.id);
+        setIsInWishlist(inWishlist);
+      }
+    } catch (error) {
+      console.error('Error checking wishlist:', error);
+    }
+  };
+
+  // Toggle wishlist with all product data
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      const shouldLogin = window.confirm('Please login to add items to wishlist. Go to login?');
+      if (shouldLogin) navigate('/login');
+      return;
+    }
+    if (!product) return;
+
+    setWishlistLoading(true);
+    try {
+      const wishlistRef = doc(db, 'wishlists', user.uid);
+      const wishlistDoc = await getDoc(wishlistRef);
+      const productData = {
+        id: product.id,
+        image: productImages[0],
+        images: productImages,
+        title: product.title,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        discount: product.discount,
+        badge: product.badge,
+        category: product.category,
+        description: product.description,
+        stock: product.stock,
+        sizes: product.sizes,
+        colors: product.colors,
+        material: product.material,
+        brand: product.brand,
+        tags: product.tags,
+        sku: product.sku,
+        featured: product.featured,
+        addedAt: new Date().toISOString()
+      };
+
+      if (wishlistDoc.exists()) {
+        const wishlistItems = wishlistDoc.data().items || [];
+        const productIndex = wishlistItems.findIndex(item => item.id === product.id);
+        if (productIndex > -1) {
+          wishlistItems.splice(productIndex, 1);
+          await updateDoc(wishlistRef, { items: wishlistItems, updatedAt: new Date().toISOString() });
+          setIsInWishlist(false);
+          showNotification(`${product.title} removed from wishlist`, 'info');
+        } else {
+          await updateDoc(wishlistRef, { items: arrayUnion(productData), updatedAt: new Date().toISOString() });
+          setIsInWishlist(true);
+          showNotification(`${product.title} added to wishlist!`, 'success');
+        }
+      } else {
+        await setDoc(wishlistRef, {
+          userId: user.uid,
+          items: [productData],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        setIsInWishlist(true);
+        showNotification(`${product.title} added to wishlist!`, 'success');
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      showNotification('Failed to update wishlist', 'error');
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const hasDiscount = product?.originalPrice && product.originalPrice > product.price;
+
+  // Calculate discount percentage if not provided
+  const calculateDiscountPercentage = () => {
+    if (!product || !hasDiscount) return 0;
+    if (product.discount) return product.discount;
+    return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  };
+
+  // Calculate total price based on quantity
+  const calculateTotalPrice = () => {
+    if (!product) return 0;
+    return product.price * quantity;
+  };
+
+  const calculateOriginalTotalPrice = () => {
+    if (!product || !product.originalPrice) return 0;
+    return product.originalPrice * quantity;
+  };
+
+  const calculateTotalSavings = () => {
+    if (!product || !hasDiscount) return 0;
+    return (product.originalPrice - product.price) * quantity;
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   const handleQuantityChange = (type) => {
     if (type === 'increment') {
+      if (product.stock && quantity >= product.stock) {
+        showNotification('Maximum stock reached', 'warning');
+        return;
+      }
       setQuantity(prev => prev + 1);
     } else if (type === 'decrement' && quantity > 1) {
       setQuantity(prev => prev - 1);
@@ -57,254 +221,398 @@ const QuickView = () => {
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
+    
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      showNotification('Please select a size', 'warning');
+      return;
+    }
+    if (product.colors && product.colors.length > 0 && !selectedColor) {
+      showNotification('Please select a color', 'warning');
+      return;
+    }
+
     const productWithDetails = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...product,
-      selectedSize,
-      quantity
+      id: product.id,
+      image: productImages[0],
+      images: productImages,
+      title: product.title,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      discount: product.discount,
+      badge: product.badge,
+      category: product.category,
+      brand: product.brand,
+      material: product.material,
+      sku: product.sku,
+      size: selectedSize,
+      color: selectedColor,
+      quantity: quantity
     };
+    
     addToCart(productWithDetails);
-    
-    const event = new CustomEvent('cartNotification', { 
-      detail: { 
-        message: `${product.title} added to cart!`,
-        type: 'success'
-      } 
-    });
-    window.dispatchEvent(event);
-    
-    navigate(-1);
+    showNotification(
+      `${quantity}x ${product.title}${selectedSize ? ` (Size: ${selectedSize})` : ''}${selectedColor ? ` (Color: ${selectedColor})` : ''} added to cart!`, 
+      'success'
+    );
+    setTimeout(() => navigate(-1), 1000);
   };
 
   const handleBuyNow = () => {
-    const productWithDetails = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...product,
-      selectedSize,
-      quantity
-    };
+    if (!product) return;
     
-    navigate('/checkout', { 
-      state: { product: productWithDetails } 
-    });
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      showNotification('Please select a size', 'warning');
+      return;
+    }
+    if (product.colors && product.colors.length > 0 && !selectedColor) {
+      showNotification('Please select a color', 'warning');
+      return;
+    }
+
+    const productWithDetails = {
+      id: product.id,
+      image: productImages[0],
+      images: productImages,
+      title: product.title,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      discount: product.discount,
+      badge: product.badge,
+      category: product.category,
+      brand: product.brand,
+      material: product.material,
+      sku: product.sku,
+      size: selectedSize,
+      color: selectedColor,
+      quantity: quantity
+    };
+
+    if (!user) {
+      sessionStorage.setItem('pendingPurchase', JSON.stringify(productWithDetails));
+      const shouldLogin = window.confirm('Please login to proceed with checkout. Go to login?');
+      if (shouldLogin) navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
+    navigate('/checkout', { state: { product: productWithDetails } });
   };
 
+  const showNotification = (message, type) => {
+    const event = new CustomEvent('cartNotification', { detail: { message, type } });
+    window.dispatchEvent(event);
+  };
+
+  if (loading || !product) {
+    return (
+      <div className="quick-view quick-view--loading">
+        <div className="container">
+          <div className="quick-view__loader">
+            <i className="fas fa-spinner fa-spin"></i>
+            <p>Loading product...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const discountPercentage = calculateDiscountPercentage();
+
   return (
-    <div className="quick-view" style={{ minHeight: '100vh', background: '#f5f5f5', padding: '40px 0' }}>
-      <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
-        <button 
-          onClick={() => navigate(-1)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 20px',
-            background: 'white',
-            border: '1px solid #e0e0e0',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            marginBottom: '30px',
-            fontSize: '14px',
-            fontWeight: '600'
-          }}
-        >
+    <div className="quick-view">
+      <div className="container">
+        <button className="quick-view__back-btn" onClick={() => navigate(-1)}>
           <i className="fas fa-arrow-left"></i>
           Back
         </button>
 
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '20px', 
-          padding: '30px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          display: 'grid',
-          gridTemplateColumns: window.innerWidth > 992 ? '1fr 1fr' : '1fr',
-          gap: '40px'
-        }}>
+        <div className="quick-view__content">
           {/* Left Side - Images */}
-          <div>
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: '15px', overflow: 'hidden', background: '#f5f5f5' }}>
-              <img src={productImages[selectedImage]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div className="quick-view__images">
+            <div className="quick-view__main-image">
+              <img src={productImages[selectedImage]} alt={product.title} />
               
+              {/* Featured Badge */}
+              {product.featured && (
+                <span className="quick-view__featured-badge">
+                  <i className="fas fa-star"></i>
+                  Featured
+                </span>
+              )}
+
               {product.badge && (
-                <span style={{
-                  position: 'absolute',
-                  top: '20px',
-                  left: '20px',
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  color: 'white',
-                  textTransform: 'uppercase',
-                  background: 'linear-gradient(135deg, #e8b4c9, #d48aa9)'
-                }}>
+                <span className={`quick-view__badge quick-view__badge--${product.badge.toLowerCase()}`}>
                   {product.badge}
                 </span>
               )}
-
-              {hasDiscount && product.discount && (
-                <span style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
-                  color: 'white',
-                  padding: '8px 14px',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600'
-                }}>
-                  {product.discount}% OFF
+              {hasDiscount && discountPercentage > 0 && (
+                <span className="quick-view__discount-badge">
+                  {discountPercentage}% OFF
                 </span>
               )}
+              
+              {/* Stock Status */}
+              {product.stock !== undefined && product.stock < 10 && product.stock > 0 && (
+                <span className="quick-view__stock-badge quick-view__stock-badge--low">
+                  Only {product.stock} left
+                </span>
+              )}
+              {product.stock === 0 && (
+                <span className="quick-view__stock-badge quick-view__stock-badge--out">
+                  Out of Stock
+                </span>
+              )}
+              <button 
+                className={`quick-view__wishlist-btn ${isInWishlist ? 'quick-view__wishlist-btn--active' : ''}`}
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <i className={`fas fa-heart ${wishlistLoading ? 'fa-spin' : ''}`}></i>
+              </button>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginTop: '20px' }}>
+            <div className="quick-view__thumbnails">
               {productImages.map((img, index) => (
                 <button
                   key={index}
+                  className={`quick-view__thumbnail ${selectedImage === index ? 'quick-view__thumbnail--active' : ''}`}
                   onClick={() => setSelectedImage(index)}
-                  style={{
-                    aspectRatio: '1',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    border: selectedImage === index ? '2px solid #e8b4c9' : '2px solid transparent',
-                    cursor: 'pointer',
-                    background: '#f5f5f5',
-                    padding: 0
-                  }}
                 >
-                  <img src={img} alt={`${product.title} ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={img} alt={`${product.title} ${index + 1}`} />
                 </button>
               ))}
             </div>
           </div>
 
           {/* Right Side - Details */}
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '15px' }}>{product.title}</h1>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[1,2,3,4].map(i => <i key={i} className="fas fa-star" style={{ color: '#ffd700', fontSize: '18px' }}></i>)}
-                <i className="fas fa-star-half-alt" style={{ color: '#ffd700', fontSize: '18px' }}></i>
-              </div>
-              <span style={{ fontSize: '15px', color: '#666' }}>4.5 (128 reviews)</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '32px', fontWeight: '700', color: '#e8b4c9' }}>₹{product.price.toLocaleString()}</span>
-              {hasDiscount && (
-                <>
-                  <span style={{ fontSize: '20px', color: '#666', textDecoration: 'line-through' }}>₹{product.originalPrice.toLocaleString()}</span>
-                  <span style={{ background: 'rgba(76, 175, 80, 0.15)', color: '#4CAF50', padding: '6px 14px', borderRadius: '20px', fontSize: '14px', fontWeight: '600' }}>
-                    Save ₹{(product.originalPrice - product.price).toLocaleString()}
+          <div className="quick-view__details">
+            {/* Category & Brand */}
+            {(product.category || product.brand) && (
+              <div className="quick-view__meta">
+                {product.category && (
+                  <span className="quick-view__category">
+                    <i className="fas fa-tag"></i>
+                    {product.category}
                   </span>
-                </>
+                )}
+                {product.brand && (
+                  <span className="quick-view__brand">
+                    <i className="fas fa-award"></i>
+                    {product.brand}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <h1 className="quick-view__title">{product.title}</h1>
+
+            {/* SKU & Material */}
+            <div className="quick-view__product-info">
+              {product.sku && (
+                <span className="quick-view__sku">
+                  <i className="fas fa-barcode"></i>
+                  SKU: {product.sku}
+                </span>
+              )}
+              {product.material && (
+                <span className="quick-view__material">
+                  <i className="fas fa-certificate"></i>
+                  Material: {product.material}
+                </span>
               )}
             </div>
 
-            <div style={{ marginBottom: '25px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>Select Size</h3>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    style={{
-                      minWidth: '50px',
-                      height: '50px',
-                      border: selectedSize === size ? '2px solid #e8b4c9' : '2px solid #e0e0e0',
-                      background: selectedSize === size ? '#e8b4c9' : 'white',
-                      color: selectedSize === size ? 'white' : '#333',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {/* Rating */}
+            <div className="quick-view__rating">
+              <div className="quick-view__stars">
+                {[1,2,3,4].map(i => <i key={i} className="fas fa-star"></i>)}
+                <i className="fas fa-star-half-alt"></i>
+              </div>
+              <span className="quick-view__rating-text">4.5 (128 reviews)</span>
+            </div>
+
+            {/* Price Section */}
+            <div className="quick-view__price-section">
+              <div className="quick-view__price-row">
+                <span className="quick-view__price-label">Price per item:</span>
+                <div className="quick-view__price-values">
+                  <span className="quick-view__price">₹{product.price.toLocaleString()}</span>
+                  {hasDiscount && (
+                    <span className="quick-view__original-price">
+                      ₹{product.originalPrice.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {quantity > 1 && (
+                <div className="quick-view__total-price-row">
+                  <span className="quick-view__total-label">Total ({quantity} items):</span>
+                  <div className="quick-view__total-values">
+                    <span className="quick-view__total-price">₹{calculateTotalPrice().toLocaleString()}</span>
+                    {hasDiscount && (
+                      <span className="quick-view__total-original-price">
+                        ₹{calculateOriginalTotalPrice().toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {hasDiscount && (
+                <span className="quick-view__savings">
+                  You Save ₹{calculateTotalSavings().toLocaleString()} ({discountPercentage}% OFF)
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            {product.description && (
+              <div className="quick-view__description">
+                <h3 className="quick-view__section-title">Description</h3>
+                <p>{product.description}</p>
+              </div>
+            )}
+
+            {/* Selected Info Display */}
+            <div className="quick-view__selected-info">
+              {selectedSize && (
+                <div className="quick-view__selected-item">
+                  <i className="fas fa-check-circle"></i>
+                  <span>Size: <strong>{selectedSize}</strong></span>
+                </div>
+              )}
+              {selectedColor && (
+                <div className="quick-view__selected-item">
+                  <i className="fas fa-palette"></i>
+                  <span>Color: <strong>{selectedColor}</strong></span>
+                </div>
+              )}
+              <div className="quick-view__selected-item">
+                <i className="fas fa-box"></i>
+                <span>Quantity: <strong>{quantity}</strong></span>
               </div>
             </div>
 
-            <div style={{ marginBottom: '25px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>Quantity</h3>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '20px', border: '2px solid #e0e0e0', borderRadius: '10px', padding: '10px 20px' }}>
+            {/* Size Selection */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div className="quick-view__section">
+                <h3 className="quick-view__section-title">
+                  Select Size <span className="quick-view__required">*</span>
+                </h3>
+                <div className="quick-view__sizes">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      className={`quick-view__size-btn ${selectedSize === size ? 'quick-view__size-btn--active' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Color Selection */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="quick-view__section">
+                <h3 className="quick-view__section-title">
+                  Select Color <span className="quick-view__required">*</span>
+                </h3>
+                <div className="quick-view__colors">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      className={`quick-view__color-btn ${selectedColor === color ? 'quick-view__color-btn--active' : ''}`}
+                      onClick={() => setSelectedColor(color)}
+                      title={color}
+                    >
+                      <span 
+                        className="quick-view__color-preview"
+                        style={{ backgroundColor: color.toLowerCase() }}
+                      />
+                      <span className="quick-view__color-name">{color}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity Selection */}
+            <div className="quick-view__section">
+              <h3 className="quick-view__section-title">
+                Quantity
+                {product.stock !== undefined && (
+                  <span className="quick-view__stock-info">
+                    ({product.stock} available)
+                  </span>
+                )}
+              </h3>
+              <div className="quick-view__quantity">
                 <button 
+                  className="quick-view__quantity-btn"
                   onClick={() => handleQuantityChange('decrement')}
                   disabled={quantity === 1}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    width: '35px',
-                    height: '35px',
-                    cursor: quantity === 1 ? 'not-allowed' : 'pointer',
-                    opacity: quantity === 1 ? 0.3 : 1
-                  }}
                 >
                   <i className="fas fa-minus"></i>
                 </button>
-                <span style={{ fontSize: '20px', fontWeight: '600', minWidth: '40px', textAlign: 'center' }}>{quantity}</span>
+                <span className="quick-view__quantity-value">{quantity}</span>
                 <button 
+                  className="quick-view__quantity-btn"
                   onClick={() => handleQuantityChange('increment')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    width: '35px',
-                    height: '35px',
-                    cursor: 'pointer'
-                  }}
+                  disabled={product.stock && quantity >= product.stock}
                 >
                   <i className="fas fa-plus"></i>
                 </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginTop: '30px', flexDirection: window.innerWidth < 576 ? 'column' : 'row' }}>
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div className="quick-view__tags-section">
+                <h3 className="quick-view__section-title">Tags</h3>
+                <div className="quick-view__tags">
+                  {product.tags.map((tag, index) => (
+                    <span key={index} className="quick-view__tag">#{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Product Info */}
+            <div className="quick-view__info">
+              <div className="quick-view__info-item">
+                <i className="fas fa-truck"></i>
+                <span>Free delivery on orders above ₹1000</span>
+              </div>
+              <div className="quick-view__info-item">
+                <i className="fas fa-undo"></i>
+                <span>7 days return policy</span>
+              </div>
+              <div className="quick-view__info-item">
+                <i className="fas fa-shield-alt"></i>
+                <span>100% genuine products</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="quick-view__actions">
               <button 
+                className="quick-view__btn quick-view__btn--cart" 
                 onClick={handleAddToCart}
-                style={{
-                  flex: 1,
-                  padding: '16px 28px',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: '600',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #e8b4c9, #d48aa9)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px'
-                }}
+                disabled={product.stock === 0}
               >
                 <i className="fas fa-shopping-bag"></i>
-                Add to Cart
+                {product.stock === 0 ? 'Out of Stock' : isInCart ? 'Added to Cart' : 'Add to Cart'}
               </button>
               <button 
+                className="quick-view__btn quick-view__btn--buy" 
                 onClick={handleBuyNow}
-                style={{
-                  flex: 1,
-                  padding: '16px 28px',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: '600',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #ff6b35, #ff5520)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px'
-                }}
+                disabled={product.stock === 0}
               >
                 <i className="fas fa-bolt"></i>
-                Buy Now
+                {product.stock === 0 ? 'Unavailable' : 'Buy Now'}
               </button>
             </div>
           </div>

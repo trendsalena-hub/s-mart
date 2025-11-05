@@ -8,23 +8,39 @@ import './ProductCard.scss';
 
 const ProductCard = ({ 
   id,
-  image, 
+  image,           // Keep for backward compatibility
+  images,          // NEW: Multiple images array
   title, 
   price, 
   originalPrice, 
   discount,
   badge,
+  category,        // NEW
+  description,     // NEW
+  stock,           // NEW
+  sizes,           // NEW
+  colors,          // NEW
+  material,        // NEW
+  brand,           // NEW
+  tags,            // NEW
+  sku,             // NEW
+  featured,        // NEW
   onQuickView 
 }) => {
-  const { addToCart, cartItems } = useCart(); // Get cartItems from context
+  const { addToCart, cartItems } = useCart();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isInWishlist, setIsInWishlist] = useState(false);
-  const [isInCart, setIsInCart] = useState(false); // Track cart status
+  const [isInCart, setIsInCart] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const hasDiscount = originalPrice && originalPrice > price;
   const productId = id || Math.random().toString(36).substr(2, 9);
+  
+  // Use images array if available, otherwise fallback to single image
+  const productImages = images && images.length > 0 ? images : [image];
+  const currentImage = productImages[currentImageIndex];
 
   // Listen to auth state
   useEffect(() => {
@@ -60,7 +76,7 @@ const ProductCard = ({
     }
   };
 
-  // Add/Remove from wishlist
+  // Add/Remove from wishlist with ALL product data
   const handleWishlistToggle = async () => {
     if (!user) {
       const shouldLogin = window.confirm('Please login to add items to wishlist. Go to login?');
@@ -77,12 +93,22 @@ const ProductCard = ({
 
       const productData = {
         id: productId,
-        image,
+        image: currentImage,
+        images: productImages,
         title,
         price,
         originalPrice,
         discount,
         badge,
+        category,
+        description,
+        stock,
+        sizes,
+        colors,
+        material,
+        brand,
+        tags,
+        sku,
         addedAt: new Date().toISOString()
       };
 
@@ -124,72 +150,114 @@ const ProductCard = ({
     }
   };
 
-  // Add to cart
+  // Add to cart with ALL product data
   const handleAddToCart = () => {
     if (isInCart) {
-      // If already in cart, navigate to cart page
       navigate('/cart');
       return;
     }
 
     const product = {
       id: productId,
-      image,
+      image: currentImage,
+      images: productImages,
       title,
       price,
       originalPrice,
       discount,
-      badge
+      badge,
+      category,
+      description,
+      stock,
+      sizes,
+      colors,
+      material,
+      brand,
+      tags,
+      sku
     };
     
     addToCart(product);
     showNotification(`${title} added to cart!`, 'success');
   };
 
+  // Buy Now with ALL product data
   const handleBuyNow = () => {
     const product = {
       id: productId,
-      image,
+      image: currentImage,
+      images: productImages,
       title,
       price,
       originalPrice,
       discount,
       badge,
+      category,
+      description,
+      stock,
+      sizes,
+      colors,
+      material,
+      brand,
+      tags,
+      sku,
       quantity: 1
     };
 
     if (!user) {
       sessionStorage.setItem('pendingPurchase', JSON.stringify(product));
-      navigate('/login', { state: { from: '/checkout' } });
+      const shouldLogin = window.confirm('Please login to proceed with checkout. Go to login?');
+      if (shouldLogin) {
+        navigate('/login', { state: { from: '/checkout' } });
+      }
       return;
     }
 
     navigate('/checkout', { 
-      state: { 
-        products: [product],
-        userId: user.uid 
-      } 
+      state: { product: product }
     });
   };
 
+  // Quick view with ALL product data
   const handleQuickView = () => {
     if (onQuickView) {
       onQuickView();
     } else {
       const product = {
         id: productId,
-        image,
+        image: currentImage,
+        images: productImages,
         title,
         price,
         originalPrice,
         discount,
-        badge
+        badge,
+        category,
+        description,
+        stock,
+        sizes,
+        colors,
+        material,
+        brand,
+        tags,
+        sku
       };
       
       navigate('/quick-view', { 
         state: { product }
       });
     }
+  };
+
+  // Image navigation for multiple images
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+  };
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
   };
 
   const showNotification = (message, type) => {
@@ -204,11 +272,43 @@ const ProductCard = ({
       {/* Product Image */}
       <div className="product-card__image-wrapper">
         <img 
-          src={image} 
+          src={currentImage} 
           alt={title} 
           className="product-card__image"
           loading="lazy"
         />
+        
+        {/* Multiple Images Navigation */}
+        {productImages.length > 1 && (
+          <>
+            <button 
+              className="product-card__image-nav product-card__image-nav--prev"
+              onClick={handlePrevImage}
+              aria-label="Previous image"
+            >
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <button 
+              className="product-card__image-nav product-card__image-nav--next"
+              onClick={handleNextImage}
+              aria-label="Next image"
+            >
+              <i className="fas fa-chevron-right"></i>
+            </button>
+            <div className="product-card__image-dots">
+              {productImages.map((_, index) => (
+                <span 
+                  key={index}
+                  className={`product-card__image-dot ${currentImageIndex === index ? 'product-card__image-dot--active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
         
         {/* Badge */}
         {badge && (
@@ -221,6 +321,19 @@ const ProductCard = ({
         {hasDiscount && discount && (
           <span className="product-card__discount-label">
             {discount}% OFF
+          </span>
+        )}
+
+        {/* Stock Status */}
+        {stock !== undefined && stock < 10 && stock > 0 && (
+          <span className="product-card__stock-label product-card__stock-label--low">
+            Only {stock} left
+          </span>
+        )}
+
+        {stock === 0 && (
+          <span className="product-card__stock-label product-card__stock-label--out">
+            Out of Stock
           </span>
         )}
 
@@ -257,6 +370,7 @@ const ProductCard = ({
             onClick={handleAddToCart}
             aria-label={isInCart ? 'Go to cart' : 'Add to cart'}
             title={isInCart ? 'Go to cart' : 'Add to cart'}
+            disabled={stock === 0}
           >
             <i className={`fas ${isInCart ? 'fa-check' : 'fa-shopping-cart'}`}></i>
           </button>
@@ -276,16 +390,71 @@ const ProductCard = ({
 
       {/* Product Info */}
       <div className="product-card__info">
+        {/* Category & Brand */}
+        <div className="product-card__meta">
+          {category && (
+            <span className="product-card__category">{category}</span>
+          )}
+          {brand && (
+            <span className="product-card__brand">{brand}</span>
+          )}
+        </div>
+
         <h3 className="product-card__title">{title}</h3>
         
+        {/* Material */}
+        {material && (
+          <p className="product-card__material">
+            <i className="fas fa-certificate"></i>
+            {material}
+          </p>
+        )}
+
         <div className="product-card__price-wrapper">
-          <span className="product-card__price">₹ {price.toLocaleString()}</span>
+          <span className="product-card__price">₹{price.toLocaleString()}</span>
           {hasDiscount && (
             <span className="product-card__original-price">
-              ₹ {originalPrice.toLocaleString()}
+              ₹{originalPrice.toLocaleString()}
             </span>
           )}
         </div>
+
+        {/* Available Sizes */}
+        {sizes && sizes.length > 0 && (
+          <div className="product-card__sizes">
+            <span className="product-card__sizes-label">Sizes:</span>
+            <div className="product-card__sizes-list">
+              {sizes.slice(0, 4).map((size, index) => (
+                <span key={index} className="product-card__size-tag">{size}</span>
+              ))}
+              {sizes.length > 4 && (
+                <span className="product-card__size-tag product-card__size-tag--more">
+                  +{sizes.length - 4}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Available Colors */}
+        {colors && colors.length > 0 && (
+          <div className="product-card__colors">
+            <span className="product-card__colors-label">Colors:</span>
+            <div className="product-card__colors-list">
+              {colors.slice(0, 4).map((color, index) => (
+                <span 
+                  key={index} 
+                  className="product-card__color-dot"
+                  style={{ backgroundColor: color.toLowerCase() }}
+                  title={color}
+                />
+              ))}
+              {colors.length > 4 && (
+                <span className="product-card__color-more">+{colors.length - 4}</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Rating */}
         <div className="product-card__rating">
@@ -299,22 +468,33 @@ const ProductCard = ({
           <span className="product-card__rating-count">(4.5)</span>
         </div>
 
+        {/* Tags */}
+        {tags && tags.length > 0 && (
+          <div className="product-card__tags">
+            {tags.slice(0, 2).map((tag, index) => (
+              <span key={index} className="product-card__tag">#{tag}</span>
+            ))}
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="product-card__buttons">
           <button 
             className="product-card__buy-btn"
             onClick={handleBuyNow}
+            disabled={stock === 0}
           >
             <i className="fas fa-bolt"></i>
-            Buy Now
+            {stock === 0 ? 'Out of Stock' : 'Buy Now'}
           </button>
 
           <button 
             className={`product-card__cart-btn ${isInCart ? 'product-card__cart-btn--added' : ''}`}
             onClick={handleAddToCart}
+            disabled={stock === 0}
           >
             <i className={`fas ${isInCart ? 'fa-check-circle' : 'fa-shopping-bag'}`}></i>
-            {isInCart ? 'Added' : 'Add to Cart'}
+            {stock === 0 ? 'Unavailable' : isInCart ? 'Added' : 'Add to Cart'}
           </button>
         </div>
       </div>
