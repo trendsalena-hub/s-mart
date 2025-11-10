@@ -1,0 +1,9 @@
+[
+    {
+      "origin": ["http://localhost:5173", "https://alena-trends.web.app", "https://alena-trends.firebaseapp.com"],
+      "method": ["GET", "POST", "PUT", "DELETE"],
+      "maxAgeSeconds": 3600,
+      "responseHeader": ["Content-Type", "Authorization"]
+    }
+  ]
+  

@@ -200,22 +200,6 @@ const Home = () => {
               ))}
             </div>
             
-            {/* Slider Controls */}
-            <button 
-              className="hero__slider-btn hero__slider-btn--prev"
-              onClick={goToPrevSlide}
-              aria-label="Previous slide"
-            >
-              <i className="fas fa-chevron-left"></i>
-            </button>
-            <button 
-              className="hero__slider-btn hero__slider-btn--next"
-              onClick={goToNextSlide}
-              aria-label="Next slide"
-            >
-              <i className="fas fa-chevron-right"></i>
-            </button>
-            
             {/* Slider Indicators */}
             <div className="hero__slider-indicators">
               {heroSlides.map((_, index) => (

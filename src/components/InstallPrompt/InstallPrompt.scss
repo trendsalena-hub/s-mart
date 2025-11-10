@@ -1,0 +1,399 @@
+.install-prompt {
+    position: fixed;
+    z-index: 99999;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+    // iOS Modal Version
+    &--ios {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+  
+    // Android/Desktop Bottom Banner
+    &--android {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      
+      @media (max-width: 768px) {
+        bottom: 80px; // Above mobile nav
+        left: 10px;
+        right: 10px;
+        transform: none;
+      }
+    }
+  
+    // Overlay for iOS modal
+    &__overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+  
+    // iOS Modal Content
+    &__content {
+      position: relative;
+      background: white;
+      border-radius: 20px;
+      padding: 30px 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+      @media (prefers-color-scheme: dark) {
+        background: #262626;
+        color: #f5f5f5;
+      }
+    }
+  
+    &__close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.05);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  
+      &:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+      }
+  
+      i {
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  
+    &__header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  
+    &__icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  
+    &__title {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0;
+      color: #333;
+  
+      @media (prefers-color-scheme: dark) {
+        color: #f5f5f5;
+      }
+    }
+  
+    &__description {
+      text-align: center;
+      color: #666;
+      font-size: 15px;
+      line-height: 1.5;
+      margin: 0 0 24px 0;
+  
+      @media (prefers-color-scheme: dark) {
+        color: #aaa;
+      }
+    }
+  
+    &__steps {
+      background: #f9f9f9;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+  
+      @media (prefers-color-scheme: dark) {
+        background: #333;
+      }
+    }
+  
+    &__step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      
+      &:not(:last-child) {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  
+        @media (prefers-color-scheme: dark) {
+          border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+  
+    &__step-number {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #c9a86a, #b8935a);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+  
+    &__step-text {
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+  
+      @media (prefers-color-scheme: dark) {
+        color: #e5e5e5;
+      }
+  
+      i {
+        color: #c9a86a;
+        font-size: 16px;
+      }
+    }
+  
+    &__dismiss-btn {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #666;
+  
+      &:hover {
+        background: #f5f5f5;
+        border-color: #ccc;
+      }
+  
+      @media (prefers-color-scheme: dark) {
+        border-color: #444;
+        color: #aaa;
+  
+        &:hover {
+          background: #333;
+          border-color: #555;
+        }
+      }
+    }
+  
+    // Android/Desktop Card Style
+    &__card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      min-width: 360px;
+      position: relative;
+  
+      @media (max-width: 768px) {
+        min-width: auto;
+      }
+  
+      @media (prefers-color-scheme: dark) {
+        background: #262626;
+      }
+    }
+  
+    &__close-small {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #999;
+      transition: all 0.2s ease;
+  
+      &:hover {
+        color: #666;
+        transform: scale(1.1);
+      }
+  
+      i {
+        font-size: 12px;
+      }
+    }
+  
+    &__card-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+  
+    &__card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+  
+    &__card-info {
+      flex: 1;
+    }
+  
+    &__card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: #333;
+  
+      @media (prefers-color-scheme: dark) {
+        color: #f5f5f5;
+      }
+    }
+  
+    &__card-subtitle {
+      font-size: 13px;
+      color: #666;
+      margin: 0;
+  
+      @media (prefers-color-scheme: dark) {
+        color: #aaa;
+      }
+    }
+  
+    &__card-actions {
+      display: flex;
+      gap: 10px;
+    }
+  
+    &__btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+  
+      &--primary {
+        background: linear-gradient(135deg, #c9a86a, #b8935a);
+        color: white;
+  
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(201, 168, 106, 0.4);
+        }
+  
+        &:active {
+          transform: translateY(0);
+        }
+  
+        i {
+          font-size: 14px;
+        }
+      }
+  
+      &--secondary {
+        background: transparent;
+        color: #666;
+        border: 1px solid #e0e0e0;
+  
+        &:hover {
+          background: #f5f5f5;
+        }
+  
+        @media (prefers-color-scheme: dark) {
+          color: #aaa;
+          border-color: #444;
+  
+          &:hover {
+            background: #333;
+          }
+        }
+      }
+    }
+  }
+  
+  // Animations
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 20px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .install-prompt--android {
+      .install-prompt__card {
+        animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+    }
+  
+    @keyframes slideUpMobile {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+  

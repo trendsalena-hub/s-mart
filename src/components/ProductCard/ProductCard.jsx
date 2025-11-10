@@ -76,7 +76,7 @@ const ProductCard = ({
     }
   };
 
-  // Add/Remove from wishlist with ALL product data
+  // Add/Remove from wishlist with ALL product data - FIXED VERSION
   const handleWishlistToggle = async () => {
     if (!user) {
       const shouldLogin = window.confirm('Please login to add items to wishlist. Go to login?');
@@ -91,32 +91,41 @@ const ProductCard = ({
       const wishlistRef = doc(db, 'wishlists', user.uid);
       const wishlistDoc = await getDoc(wishlistRef);
 
+      // Create product data object with null checks - NO undefined values
       const productData = {
-        id: productId,
-        image: currentImage,
-        images: productImages,
-        title,
-        price,
-        originalPrice,
-        discount,
-        badge,
-        category,
-        description,
-        stock,
-        sizes,
-        colors,
-        material,
-        brand,
-        tags,
-        sku,
+        id: productId || '',
+        image: currentImage || '',
+        images: productImages || [],
+        title: title || '',
+        price: price || 0,
+        originalPrice: originalPrice || 0,
+        discount: discount || 0,
+        badge: badge || '',
+        category: category || '',
+        description: description || '',
+        stock: stock !== undefined ? stock : 999,
+        sizes: sizes || [],
+        colors: colors || [],
+        material: material || '',
+        brand: brand || '',
+        tags: tags || [],
+        sku: sku || '',
         addedAt: new Date().toISOString()
       };
+
+      // Remove any undefined values to be extra safe
+      Object.keys(productData).forEach(key => {
+        if (productData[key] === undefined) {
+          productData[key] = null;
+        }
+      });
 
       if (wishlistDoc.exists()) {
         const wishlistItems = wishlistDoc.data().items || [];
         const productIndex = wishlistItems.findIndex(item => item.id === productId);
 
         if (productIndex > -1) {
+          // Remove from wishlist
           wishlistItems.splice(productIndex, 1);
           await updateDoc(wishlistRef, { 
             items: wishlistItems,
@@ -125,6 +134,7 @@ const ProductCard = ({
           setIsInWishlist(false);
           showNotification(`${title} removed from wishlist`, 'info');
         } else {
+          // Add to wishlist
           await updateDoc(wishlistRef, {
             items: arrayUnion(productData),
             updatedAt: new Date().toISOString()
@@ -133,6 +143,7 @@ const ProductCard = ({
           showNotification(`${title} added to wishlist!`, 'success');
         }
       } else {
+        // Create new wishlist
         await setDoc(wishlistRef, {
           userId: user.uid,
           items: [productData],
@@ -144,13 +155,13 @@ const ProductCard = ({
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      showNotification('Failed to update wishlist', 'error');
+      showNotification('Failed to update wishlist. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Add to cart with ALL product data
+  // Add to cart with ALL product data - FIXED VERSION
   const handleAddToCart = () => {
     if (isInCart) {
       navigate('/cart');
@@ -158,49 +169,49 @@ const ProductCard = ({
     }
 
     const product = {
-      id: productId,
-      image: currentImage,
-      images: productImages,
-      title,
-      price,
-      originalPrice,
-      discount,
-      badge,
-      category,
-      description,
-      stock,
-      sizes,
-      colors,
-      material,
-      brand,
-      tags,
-      sku
+      id: productId || '',
+      image: currentImage || '',
+      images: productImages || [],
+      title: title || '',
+      price: price || 0,
+      originalPrice: originalPrice || 0,
+      discount: discount || 0,
+      badge: badge || '',
+      category: category || '',
+      description: description || '',
+      stock: stock !== undefined ? stock : 999,
+      sizes: sizes || [],
+      colors: colors || [],
+      material: material || '',
+      brand: brand || '',
+      tags: tags || [],
+      sku: sku || ''
     };
     
     addToCart(product);
     showNotification(`${title} added to cart!`, 'success');
   };
 
-  // Buy Now with ALL product data
+  // Buy Now with ALL product data - FIXED VERSION
   const handleBuyNow = () => {
     const product = {
-      id: productId,
-      image: currentImage,
-      images: productImages,
-      title,
-      price,
-      originalPrice,
-      discount,
-      badge,
-      category,
-      description,
-      stock,
-      sizes,
-      colors,
-      material,
-      brand,
-      tags,
-      sku,
+      id: productId || '',
+      image: currentImage || '',
+      images: productImages || [],
+      title: title || '',
+      price: price || 0,
+      originalPrice: originalPrice || 0,
+      discount: discount || 0,
+      badge: badge || '',
+      category: category || '',
+      description: description || '',
+      stock: stock !== undefined ? stock : 999,
+      sizes: sizes || [],
+      colors: colors || [],
+      material: material || '',
+      brand: brand || '',
+      tags: tags || [],
+      sku: sku || '',
       quantity: 1
     };
 
@@ -218,34 +229,14 @@ const ProductCard = ({
     });
   };
 
-  // Quick view with ALL product data
+  // Quick view with ALL product data - FIXED VERSION
   const handleQuickView = () => {
     if (onQuickView) {
       onQuickView();
     } else {
-      const product = {
-        id: productId,
-        image: currentImage,
-        images: productImages,
-        title,
-        price,
-        originalPrice,
-        discount,
-        badge,
-        category,
-        description,
-        stock,
-        sizes,
-        colors,
-        material,
-        brand,
-        tags,
-        sku
-      };
-      
       navigate(`/quick-view`, { 
-      state: { productId } 
-    });
+        state: { productId } 
+      });
     }
   };
 

@@ -11,6 +11,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useCart } from '../../components/context/CartContext';
 import './Checkout.scss';
 
+
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,8 +40,10 @@ const Checkout = () => {
     isDefault: false
   });
 
+
   // Available sizes
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
 
   // Authentication check
   useEffect(() => {
@@ -54,9 +57,11 @@ const Checkout = () => {
     return () => unsubscribe();
   }, [navigate]);
 
+
   // Load saved addresses from Firestore
   useEffect(() => {
     if (!user) return;
+
 
     const addressesRef = doc(db, 'addresses', user.uid);
     const unsubscribe = onSnapshot(addressesRef, (docSnap) => {
@@ -64,6 +69,7 @@ const Checkout = () => {
         const data = docSnap.data();
         const addressesArray = data.addresses || [];
         setSavedAddresses(addressesArray);
+
 
         // Automatically select default address if none selected
         if (!selectedAddress) {
@@ -79,8 +85,10 @@ const Checkout = () => {
       setLoading(false);
     });
 
+
     return () => unsubscribe();
   }, [user, selectedAddress]);
+
 
   // Set checkout items from Buy Now product or cart items 
   useEffect(() => {
@@ -102,6 +110,7 @@ const Checkout = () => {
     }
   }, [location.state, cartItems]);
 
+
   // Handle quantity updating per item
   const handleQuantityChange = (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -116,6 +125,7 @@ const Checkout = () => {
     }
   };
 
+
   // Handle size selection per item
   const handleSizeChange = (itemId, size) => {
     setCheckoutItems(prev => 
@@ -124,6 +134,7 @@ const Checkout = () => {
       )
     );
   };
+
 
   // Handle removing a product from checkout (cart)
   const handleRemoveItem = (itemId) => {
@@ -136,21 +147,28 @@ const Checkout = () => {
     }
   };
 
+
   // Calculate subtotal
   const calculateTotal = () => {
     return checkoutItems.reduce((total, item) => total + (item.price * (item.quantity || 1)), 0);
   };
+
 
   const subtotal = calculateTotal();
   const shipping = subtotal > 1000 ? 0 : 50;
   const tax = subtotal * 0.18;
   const total = subtotal + shipping + tax;
 
+
   // Manage form input for address
   const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setAddressForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setAddressForm(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
+
 
   // Save or update address in Firestore
   const handleSaveAddress = async () => {
@@ -165,11 +183,13 @@ const Checkout = () => {
       return;
     }
 
+
     setSaving(true);
     try {
       const addressesRef = doc(db, 'addresses', user.uid);
       const addressDoc = await getDoc(addressesRef);
       let updatedAddresses = [];
+
 
       if (editingAddress) {
         if (addressDoc.exists()) {
@@ -203,6 +223,7 @@ const Checkout = () => {
         }
       }
 
+
       await setDoc(addressesRef, { userId: user.uid, addresses: updatedAddresses, updatedAt: new Date().toISOString() });
       setShowAddressForm(false);
       setEditingAddress(null);
@@ -215,11 +236,13 @@ const Checkout = () => {
     }
   };
 
+
   const handleEditAddress = (address) => {
     setAddressForm(address);
     setEditingAddress(address);
     setShowAddressForm(true);
   };
+
 
   const handleDeleteAddress = async (addressId) => {
     if (!window.confirm('Are you sure you want to delete this address?')) return;
@@ -241,6 +264,7 @@ const Checkout = () => {
     }
   };
 
+
   const handleSetDefaultAddress = async (addressId) => {
     try {
       const addressesRef = doc(db, 'addresses', user.uid);
@@ -257,6 +281,7 @@ const Checkout = () => {
       alert('Failed to set default address');
     }
   };
+
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
@@ -299,6 +324,7 @@ const Checkout = () => {
     }
   };
 
+
   if (loading) {
     return (
       <div className="checkout">
@@ -311,6 +337,7 @@ const Checkout = () => {
       </div>
     );
   }
+  
   if (checkoutItems.length === 0) {
     return (
       <div className="checkout">
@@ -326,6 +353,7 @@ const Checkout = () => {
     );
   }
 
+
   return (
     <div className="checkout">
       <div className="container">
@@ -336,6 +364,7 @@ const Checkout = () => {
           </button>
         </div>
 
+
         <div className="checkout__content">
           {/* Left Section */}
           <div className="checkout__main">
@@ -345,28 +374,200 @@ const Checkout = () => {
                 <h2><i className="fas fa-map-marker-alt"></i> Delivery Address</h2>
                 <button 
                   className="btn btn--secondary" 
-                  onClick={() => { setShowAddressForm(true); setEditingAddress(null); setAddressForm({name:'', mobile:'', pincode:'', address:'', locality:'', city:'', state:'', addressType:'home', isDefault:false}); }}
+                  onClick={() => { 
+                    setShowAddressForm(true); 
+                    setEditingAddress(null); 
+                    setAddressForm({
+                      name:'', 
+                      mobile:'', 
+                      pincode:'', 
+                      address:'', 
+                      locality:'', 
+                      city:'', 
+                      state:'', 
+                      addressType:'home', 
+                      isDefault:false
+                    }); 
+                  }}
                 >
                   <i className="fas fa-plus"></i> Add New Address
                 </button>
               </div>
 
+
               {showAddressForm && (
                 <div className="address-form">
                   <h3>{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
                   <div className="address-form__grid">
-                    {/* form groups for name, mobile, address, locality, city, state, pincode, addressType, isDefault */}
-                    {/* ... as before ... */}
-                    {/* (omit here for brevity, reuse the form from above) */}
+                    <div className="form-group">
+                      <label htmlFor="name">Name *</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        className="form-control"
+                        value={addressForm.name}
+                        onChange={handleAddressChange}
+                        placeholder="Full Name"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="mobile">Mobile Number *</label>
+                      <input
+                        type="tel"
+                        id="mobile"
+                        name="mobile"
+                        className="form-control"
+                        value={addressForm.mobile}
+                        onChange={handleAddressChange}
+                        placeholder="10-digit Mobile Number"
+                        maxLength="10"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="pincode">Pincode *</label>
+                      <input
+                        type="text"
+                        id="pincode"
+                        name="pincode"
+                        className="form-control"
+                        value={addressForm.pincode}
+                        onChange={handleAddressChange}
+                        placeholder="Pincode"
+                        maxLength="6"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group form-group--full">
+                      <label htmlFor="address">Address (House No., Building, Street) *</label>
+                      <textarea
+                        id="address"
+                        name="address"
+                        className="form-control"
+                        value={addressForm.address}
+                        onChange={handleAddressChange}
+                        placeholder="House no., street, landmark"
+                        rows="3"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="locality">Locality *</label>
+                      <input
+                        type="text"
+                        id="locality"
+                        name="locality"
+                        className="form-control"
+                        value={addressForm.locality}
+                        onChange={handleAddressChange}
+                        placeholder="Locality"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="city">City/District *</label>
+                      <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        className="form-control"
+                        value={addressForm.city}
+                        onChange={handleAddressChange}
+                        placeholder="City or District"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="state">State *</label>
+                      <input
+                        type="text"
+                        id="state"
+                        name="state"
+                        className="form-control"
+                        value={addressForm.state}
+                        onChange={handleAddressChange}
+                        placeholder="State"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group form-group--full">
+                      <label>Address Type *</label>
+                      <div className="address-type-options">
+                        <label className="radio-label">
+                          <input
+                            type="radio"
+                            name="addressType"
+                            value="home"
+                            checked={addressForm.addressType === 'home'}
+                            onChange={handleAddressChange}
+                          />
+                          <span><i className="fas fa-home"></i> Home</span>
+                        </label>
+                        <label className="radio-label">
+                          <input
+                            type="radio"
+                            name="addressType"
+                            value="work"
+                            checked={addressForm.addressType === 'work'}
+                            onChange={handleAddressChange}
+                          />
+                          <span><i className="fas fa-briefcase"></i> Work</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-group form-group--full">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          name="isDefault"
+                          checked={addressForm.isDefault}
+                          onChange={handleAddressChange}
+                        />
+                        <span>Set as default address</span>
+                      </label>
+                    </div>
                   </div>
+                  
                   <div className="address-form__actions">
-                    <button className="btn btn--primary" onClick={handleSaveAddress} disabled={saving}>
-                      {saving ? <> <i className="fas fa-spinner fa-spin"></i> Saving... </> : <> <i className="fas fa-save"></i> Save Address </>}
+                    <button 
+                      className="btn btn--primary" 
+                      onClick={handleSaveAddress} 
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i> Saving...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-save"></i> Save Address
+                        </>
+                      )}
                     </button>
-                    <button className="btn btn--secondary" onClick={() => { setShowAddressForm(false); setEditingAddress(null); }} disabled={saving}>Cancel</button>
+                    <button 
+                      className="btn btn--secondary" 
+                      onClick={() => { 
+                        setShowAddressForm(false); 
+                        setEditingAddress(null); 
+                      }} 
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}
+
 
               {savedAddresses.length === 0 && !showAddressForm ? (
                 <div className="empty-state">
@@ -404,14 +605,32 @@ const Checkout = () => {
                       </div>
                       <div className="address-card__actions">
                         {!address.isDefault && (
-                           <button className="action-btn action-btn--default" onClick={e => { e.stopPropagation(); handleSetDefaultAddress(address.id); }}>
+                           <button 
+                             className="action-btn action-btn--default" 
+                             onClick={e => { 
+                               e.stopPropagation(); 
+                               handleSetDefaultAddress(address.id); 
+                             }}
+                           >
                              <i className="fas fa-star"></i> Set Default
                            </button>
                         )}
-                        <button className="action-btn action-btn--edit" onClick={e => { e.stopPropagation(); handleEditAddress(address); }}>
+                        <button 
+                          className="action-btn action-btn--edit" 
+                          onClick={e => { 
+                            e.stopPropagation(); 
+                            handleEditAddress(address); 
+                          }}
+                        >
                           <i className="fas fa-edit"></i> Edit
                         </button>
-                        <button className="action-btn action-btn--delete" onClick={e => { e.stopPropagation(); handleDeleteAddress(address.id); }}>
+                        <button 
+                          className="action-btn action-btn--delete" 
+                          onClick={e => { 
+                            e.stopPropagation(); 
+                            handleDeleteAddress(address.id); 
+                          }}
+                        >
                           <i className="fas fa-trash"></i> Delete
                         </button>
                       </div>
@@ -420,6 +639,7 @@ const Checkout = () => {
                 </div>
               )}
             </div>
+
 
             {/* Products Section */}
             <div className="checkout__section">
@@ -431,6 +651,7 @@ const Checkout = () => {
                   <i className="fas fa-ruler"></i> Size Chart
                 </button>
               </div>
+
 
               {showSizeChart && (
                 <div className="size-chart-modal">
@@ -446,7 +667,10 @@ const Checkout = () => {
                       <table className="size-chart-table">
                         <thead>
                           <tr>
-                            <th>Size</th><th>Chest (inches)</th><th>Waist (inches)</th><th>Length (inches)</th>
+                            <th>Size</th>
+                            <th>Chest (inches)</th>
+                            <th>Waist (inches)</th>
+                            <th>Length (inches)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -463,9 +687,14 @@ const Checkout = () => {
                 </div>
               )}
 
+
               <div className="checkout-products">
                 {checkoutItems.map((item, index) => (
-                  <div key={`${item.id}-${index}`} className="checkout-product" onClick={() => navigate('/quick-view', { state: { product: item } })}>
+                  <div 
+                    key={`${item.id}-${index}`} 
+                    className="checkout-product" 
+                    onClick={() => navigate('/quick-view', { state: { product: item } })}
+                  >
                     <div className="checkout-product__image">
                       <img src={item.image} alt={item.title} />
                       {item.badge && (
@@ -480,7 +709,11 @@ const Checkout = () => {
                         {!location.state?.product && (
                           <button 
                             className="checkout-product__remove" 
-                            onClick={e => { e.stopPropagation(); handleRemoveItem(item.id); }} title="Remove item"
+                            onClick={e => { 
+                              e.stopPropagation(); 
+                              handleRemoveItem(item.id); 
+                            }} 
+                            title="Remove item"
                           >
                             <i className="fas fa-trash"></i>
                           </button>
@@ -505,7 +738,10 @@ const Checkout = () => {
                               <button 
                                 key={size}
                                 className={`size-btn ${item.size === size ? 'size-btn--active' : ''}`}
-                                onClick={e => { e.stopPropagation(); handleSizeChange(item.id, size); }}
+                                onClick={e => { 
+                                  e.stopPropagation(); 
+                                  handleSizeChange(item.id, size); 
+                                }}
                               >
                                 {size}
                               </button>
@@ -517,7 +753,10 @@ const Checkout = () => {
                           <div className="quantity-selector">
                             <button 
                               className="quantity-btn"
-                              onClick={e => { e.stopPropagation(); handleQuantityChange(item.id, (item.quantity || 1) - 1); }}
+                              onClick={e => { 
+                                e.stopPropagation(); 
+                                handleQuantityChange(item.id, (item.quantity || 1) - 1); 
+                              }}
                               disabled={(item.quantity || 1) <= 1}
                             >
                               <i className="fas fa-minus"></i>
@@ -525,7 +764,10 @@ const Checkout = () => {
                             <span className="quantity-value">{item.quantity || 1}</span>
                             <button 
                               className="quantity-btn"
-                              onClick={e => { e.stopPropagation(); handleQuantityChange(item.id, (item.quantity || 1) + 1); }}
+                              onClick={e => { 
+                                e.stopPropagation(); 
+                                handleQuantityChange(item.id, (item.quantity || 1) + 1); 
+                              }}
                             >
                               <i className="fas fa-plus"></i>
                             </button>
@@ -552,6 +794,7 @@ const Checkout = () => {
               </div>
             </div>
           </div>
+
 
           {/* Right Section */}
           <div className="checkout__sidebar">
@@ -603,5 +846,6 @@ const Checkout = () => {
     </div>
   );
 };
+
 
 export default Checkout;

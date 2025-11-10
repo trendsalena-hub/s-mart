@@ -1,0 +1,12 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /admin
+Disallow: /profile
+Disallow: /cart
+Disallow: /checkout
+Allow: /
+Allow: /collections
+Allow: /about
+Allow: /contact
+
+Sitemap: https://alenatrends.web.app/sitemap.xml
