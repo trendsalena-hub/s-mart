@@ -1,0 +1,35 @@
+@mixin respond($breakpoint) {
+    @if $breakpoint == mobile {
+      @media (max-width: 767px) {
+        @content;
+      }
+    }
+  
+    @if $breakpoint == tablet {
+      @media (max-width: 1023px) {
+        @content;
+      }
+    }
+  
+    @if $breakpoint == desktop {
+      @media (min-width: 1024px) {
+        @content;
+      }
+    }
+  }
+  
+  @mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  @mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  @mixin transition($property: all, $duration: 0.3s, $timing: ease) {
+    transition: $property $duration $timing;
+  }

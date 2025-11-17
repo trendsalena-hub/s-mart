@@ -1,0 +1,470 @@
+ return (
+    <div className="admin-dashboard__card">
+      <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+      
+      <form onSubmit={handleSubmitProduct} className="product-form">
+        <div className="product-form__grid">
+          {/* Basic Information */}
+          <div className="product-form__group">
+            <label htmlFor="title">Product Title *</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={productForm.title}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter product title"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="category">Category *</label>
+            <select
+              id="category"
+              name="category"
+              value={productForm.category}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select category</option>
+              <option value="dresses">Dresses</option>
+              <option value="tops">Tops</option>
+              <option value="bottoms">Bottoms</option>
+              <option value="outerwear">Outerwear</option>
+              <option value="accessories">Accessories</option>
+            </select>
+          </div>
+
+          {/* Pricing */}
+          <div className="product-form__group">
+            <label htmlFor="price">Price (₹) *</label>
+            <input
+              type="number"
+              id="price"
+              name="price"
+              value={productForm.price}
+              onChange={handleInputChange}
+              required
+              min="0"
+              step="0.01"
+              placeholder="499.00"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="originalPrice">Original Price (₹)</label>
+            <input
+              type="number"
+              id="originalPrice"
+              name="originalPrice"
+              value={productForm.originalPrice}
+              onChange={handleInputChange}
+              min="0"
+              step="0.01"
+              placeholder="799.00"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="discount">Discount (%)</label>
+            <input
+              type="number"
+              id="discount"
+              name="discount"
+              value={productForm.discount}
+              onChange={handleInputChange}
+              min="0"
+              max="100"
+              placeholder="25"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="stock">Stock Quantity *</label>
+            <input
+              type="number"
+              id="stock"
+              name="stock"
+              value={productForm.stock}
+              onChange={handleInputChange}
+              required
+              min="0"
+              placeholder="100"
+            />
+          </div>
+
+          {/* Additional Fields */}
+          <div className="product-form__group">
+            <label htmlFor="brand">Brand</label>
+            <input
+              type="text"
+              id="brand"
+              name="brand"
+              value={productForm.brand}
+              onChange={handleInputChange}
+              placeholder="Brand name"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="sku">SKU</label>
+            <input
+              type="text"
+              id="sku"
+              name="sku"
+              value={productForm.sku}
+              onChange={handleInputChange}
+              placeholder="Product SKU/Code"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="material">Material</label>
+            <input
+              type="text"
+              id="material"
+              name="material"
+              value={productForm.material}
+              onChange={handleInputChange}
+              placeholder="e.g., Cotton, Polyester"
+            />
+          </div>
+
+          <div className="product-form__group">
+            <label htmlFor="badge">Badge</label>
+            <select
+              id="badge"
+              name="badge"
+              value={productForm.badge}
+              onChange={handleInputChange}
+            >
+              <option value="">No badge</option>
+              <option value="New">New</option>
+              <option value="Sale">Sale</option>
+              <option value="Hot">Hot</option>
+              <option value="Trending">Trending</option>
+            </select>
+          </div>
+
+          {/* Multiple Images Upload */}
+          <div className="product-form__group product-form__group--full">
+            <label>Product Images *</label>
+            <div className="image-upload-manager">
+              {/* File Upload Area */}
+              <div className="image-upload-area">
+                <input
+                  type="file"
+                  id="product-images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="image-upload-input"
+                />
+                <label htmlFor="product-images" className="image-upload-label">
+                  <i className="fas fa-cloud-upload-alt"></i>
+                  <span>Click to upload images</span>
+                  <small>Supports JPG, PNG, WEBP (Max 5MB each)</small>
+                </label>
+              </div>
+
+              {/* Uploading Progress */}
+              {uploadingImages.length > 0 && (
+                <div className="uploading-files">
+                  <h4>Uploading {uploadingImages.length} image(s)...</h4>
+                  <div className="uploading-list">
+                    {uploadingImages.map((fileName, index) => (
+                      <div key={index} className="uploading-item">
+                        <i className="fas fa-spinner fa-spin"></i>
+                        <span>{fileName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Image Previews */}
+              {productForm.images.length > 0 && (
+                <div className="image-previews">
+                  <h4>Uploaded Images ({productForm.images.length})</h4>
+                  <div className="preview-grid">
+                    {productForm.images.map((image, index) => (
+                      <div key={index} className="preview-item">
+                        <div className="preview-image">
+                          <img src={image.url} alt={`Preview ${index + 1}`} />
+                          {index === 0 && (
+                            <span className="primary-badge">Primary</span>
+                          )}
+                          <button
+                            type="button"
+                            className="remove-image-btn"
+                            onClick={() => handleRemoveImage(index)}
+                            title="Remove image"
+                          >
+                            <i className="fas fa-times"></i>
+                          </button>
+                        </div>
+                        <div className="preview-info">
+                          <span className="image-name">{image.name}</span>
+                          <span className="image-size">
+                            {(image.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            className="set-primary-btn"
+                            onClick={() => handleReorderImages(index, 0)}
+                            title="Set as primary"
+                          >
+                            Set Primary
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Size Selection */}
+          <div className="product-form__group product-form__group--full">
+            <label>Available Sizes *</label>
+            <div className="size-selector">
+              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                <button
+                  key={size}
+                  type="button"
+                  className={`size-selector__btn ${productForm.sizes.includes(size) ? 'size-selector__btn--active' : ''}`}
+                  onClick={() => handleSizeToggle(size)}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            <small>Click to select/deselect sizes</small>
+          </div>
+
+          {/* Colors */}
+          <div className="product-form__group product-form__group--full">
+            <label>Available Colors *</label>
+            <div className="color-manager">
+              {productForm.colors.map((color, index) => (
+                <div key={index} className="color-manager__item">
+                  <input
+                    type="text"
+                    value={color}
+                    onChange={(e) => handleColorChange(index, e.target.value)}
+                    placeholder="Enter color name"
+                    required
+                  />
+                  {productForm.colors.length > 1 && (
+                    <button
+                      type="button"
+                      className="color-manager__remove-btn"
+                      onClick={() => handleRemoveColor(index)}
+                      title="Remove color"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                className="color-manager__add-btn"
+                onClick={handleAddColor}
+              >
+                <i className="fas fa-plus"></i>
+                Add Color
+              </button>
+            </div>
+          </div>
+
+          {/* Offer Section */}
+          <div className="product-form__group product-form__group--full mobile-optimized">
+  <div className="offer-section">
+    <label className="product-form__checkbox">
+      <input
+        type="checkbox"
+        checked={productForm.offer.enabled}
+        onChange={(e) => handleOfferChange('enabled', e.target.checked)}
+      />
+      <span>🎁 Enable Special Offer</span>
+    </label>
+
+    {productForm.offer.enabled && (
+      <div className="offer-fields">
+        <div className="offer-grid">
+          {/* Offer Title */}
+          <div className="product-form__group">
+            <label htmlFor="offerTitle">Offer Title *</label>
+            <input
+              type="text"
+              id="offerTitle"
+              value={productForm.offer.title}
+              onChange={(e) => handleOfferChange('title', e.target.value)}
+              placeholder="e.g., Summer Sale, Flash Deal"
+              required
+            />
+          </div>
+
+          {/* Offer Type */}
+          <div className="product-form__group">
+            <label htmlFor="offerType">Offer Type *</label>
+            <select
+              id="offerType"
+              value={productForm.offer.type}
+              onChange={(e) => handleOfferChange('type', e.target.value)}
+              required
+            >
+              <option value="percentage">Percentage Off</option>
+              <option value="fixed">Fixed Amount Off</option>
+            </select>
+          </div>
+
+          {/* Offer Value */}
+          <div className="product-form__group">
+            <label htmlFor="offerValue">
+              {productForm.offer.type === 'percentage' ? 'Discount Percentage *' : 'Discount Amount (₹) *'}
+            </label>
+            <input
+              type="number"
+              id="offerValue"
+              value={productForm.offer.value}
+              onChange={(e) => handleOfferChange('value', e.target.value)}
+              min="0"
+              max={productForm.offer.type === 'percentage' ? '100' : ''}
+              step={productForm.offer.type === 'percentage' ? '1' : '0.01'}
+              placeholder={productForm.offer.type === 'percentage' ? '25' : '100'}
+              required
+            />
+          </div>
+
+          {/* Valid Until */}
+          <div className="product-form__group">
+            <label htmlFor="offerValidUntil">Valid Until *</label>
+            <input
+              type="datetime-local"
+              id="offerValidUntil"
+              value={productForm.offer.validUntil}
+              onChange={(e) => handleOfferChange('validUntil', e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              required
+            />
+          </div>
+
+          {/* Offer Description */}
+          <div className="product-form__group product-form__group--full">
+            <label htmlFor="offerDescription">Offer Description</label>
+            <textarea
+              id="offerDescription"
+              value={productForm.offer.description}
+              onChange={(e) => handleOfferChange('description', e.target.value)}
+              rows="3"
+              placeholder="Describe the offer details..."
+            ></textarea>
+          </div>
+        </div>
+
+        {/* Offer Preview */}
+        {(productForm.offer.title || productForm.offer.value) && (
+          <div className="offer-preview">
+            <h5>Offer Preview:</h5>
+            <div className="preview-card">
+              <span className="offer-badge">
+                {productForm.offer.title || 'Special Offer'}
+              </span>
+              {productForm.offer.value && (
+                productForm.offer.type === 'percentage' ? (
+                  <span className="offer-value">-{productForm.offer.value}% OFF</span>
+                ) : (
+                  <span className="offer-value">-₹{productForm.offer.value} OFF</span>
+                )
+              )}
+              {productForm.offer.validUntil && (
+                <span className="offer-validity">
+                  Valid until: {new Date(productForm.offer.validUntil).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</div>
+
+          {/* Tags */}
+          <div className="product-form__group product-form__group--full">
+            <label htmlFor="tags">Tags (comma-separated)</label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              value={productForm.tags}
+              onChange={handleInputChange}
+              placeholder="summer, trending, new-arrival"
+            />
+            <small>Separate tags with commas for better searchability</small>
+          </div>
+
+          {/* Description */}
+          <div className="product-form__group product-form__group--full">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={productForm.description}
+              onChange={handleInputChange}
+              rows="4"
+              placeholder="Enter product description"
+            ></textarea>
+          </div>
+
+          {/* Featured */}
+          <div className="product-form__group product-form__group--full">
+            <label className="product-form__checkbox">
+              <input
+                type="checkbox"
+                name="featured"
+                checked={productForm.featured}
+                onChange={handleInputChange}
+              />
+              <span>⭐ Featured Product (Show on homepage)</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="product-form__actions">
+          <button 
+            type="submit" 
+            className="product-form__btn product-form__btn--primary"
+            disabled={submitting || productForm.images.length === 0}
+          >
+            {submitting ? (
+              <>
+                <i className="fas fa-spinner fa-spin"></i>
+                {editingProduct ? 'Updating...' : 'Adding...'}
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save"></i>
+                {editingProduct ? 'Update Product' : 'Add Product'}
+              </>
+            )}
+          </button>
+          {editingProduct && (
+            <button
+              type="button"
+              className="product-form__btn product-form__btn--secondary"
+              onClick={resetForm}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );

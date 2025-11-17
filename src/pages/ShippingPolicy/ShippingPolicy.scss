@@ -1,0 +1,624 @@
+// ShippingPolicy.scss
+
+// Variables
+$light-gold: #f4e4b4;
+$medium-gold: #d4af37;
+$dark-gold: #b8941f;
+$white: #ffffff;
+$light-gray: #f8f9fa;
+$medium-gray: #e9ecef;
+$dark-gray: #6c757d;
+$darker-gray: #495057;
+$black: #212529;
+$success: #28a745;
+$warning: #ffc107;
+$danger: #dc3545;
+$info: #17a2b8;
+$shadow-light: rgba(0, 0, 0, 0.08);
+$shadow-medium: rgba(0, 0, 0, 0.12);
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin card-shadow {
+  box-shadow: 0 2px 16px $shadow-light;
+  border: 1px solid $medium-gray;
+}
+
+@mixin gold-gradient {
+  background: linear-gradient(135deg, $light-gold 0%, $medium-gold 100%);
+}
+
+// Main Container
+.policy-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, $light-gray 0%, $white 100%);
+  padding: 40px 0;
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+}
+
+// Header Section
+.policy-page__header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: $white;
+  border-radius: 12px;
+  @include card-shadow;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    @include gold-gradient;
+  }
+
+  h1 {
+    color: $black;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, $dark-gold 0%, $medium-gold 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+  }
+
+  p {
+    color: $dark-gray;
+    font-size: 1.1rem;
+    margin: 0;
+    font-style: italic;
+  }
+}
+
+// Content Area
+.policy-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+// Policy Blocks
+.policy-block {
+  background: $white;
+  border-radius: 12px;
+  padding: 30px;
+  @include card-shadow;
+  transition: all 0.3s ease;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px $shadow-medium;
+  }
+
+  &--seal-pack {
+    border-left: 6px solid $medium-gold;
+    background: linear-gradient(135deg, $white 0%, lighten($light-gold, 8%) 100%);
+
+    &::before {
+      content: '⚠️ IMPORTANT';
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      background: $medium-gold;
+      color: $white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  h2 {
+    color: $black;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid $light-gold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    i {
+      color: $medium-gold;
+      font-size: 1.3rem;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 1.3rem;
+    }
+  }
+
+  h3 {
+    color: $darker-gray;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 25px 0 15px 0;
+    padding-left: 10px;
+    border-left: 3px solid $medium-gold;
+
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+    }
+  }
+
+  h4 {
+    color: $darker-gray;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 20px 0 10px 0;
+
+    @media (max-width: 768px) {
+      font-size: 1rem;
+    }
+  }
+
+  p {
+    color: $dark-gray;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    font-size: 1rem;
+
+    strong {
+      color: $darker-gray;
+      font-weight: 600;
+    }
+  }
+
+  ul {
+    margin: 15px 0;
+    padding-left: 20px;
+
+    li {
+      color: $dark-gray;
+      line-height: 1.6;
+      margin-bottom: 8px;
+      position: relative;
+      padding-left: 10px;
+
+      &::before {
+        content: '•';
+        color: $medium-gold;
+        font-weight: bold;
+        position: absolute;
+        left: -15px;
+      }
+
+      strong {
+        color: $darker-gray;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Seal Pack Specific Styles
+.seal-pack-notice {
+  background: lighten($warning, 45%);
+  border: 1px solid lighten($warning, 20%);
+  border-left: 4px solid $warning;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 20px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  i {
+    color: $warning;
+    font-size: 1.2rem;
+    margin-top: 2px;
+  }
+
+  p {
+    margin: 0;
+    color: darken($warning, 30%);
+    font-weight: 500;
+  }
+}
+
+.policy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 25px 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+.policy-item {
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid;
+
+  h4 {
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 15px;
+
+    li {
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+
+  &--allowed {
+    border-color: lighten($success, 30%);
+    background: lighten($success, 45%);
+
+    h4 {
+      color: darken($success, 20%);
+
+      i {
+        color: $success;
+      }
+    }
+
+    li::before {
+      color: $success;
+    }
+  }
+
+  &--not-allowed {
+    border-color: lighten($danger, 30%);
+    background: lighten($danger, 45%);
+
+    h4 {
+      color: darken($danger, 20%);
+
+      i {
+        color: $danger;
+      }
+    }
+
+    li::before {
+      color: $danger;
+    }
+  }
+}
+
+.warning-box {
+  background: lighten($danger, 48%);
+  border: 2px solid lighten($danger, 30%);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 25px 0;
+  border-left: 6px solid $danger;
+
+  h4 {
+    color: darken($danger, 20%);
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+
+    i {
+      color: $danger;
+      font-size: 1.3rem;
+    }
+  }
+
+  p {
+    color: darken($danger, 25%);
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  ul {
+    margin: 0;
+
+    li {
+      color: darken($danger, 20%);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+}
+
+.check-instructions {
+  background: lighten($info, 50%);
+  border: 1px solid lighten($info, 30%);
+  border-radius: 8px;
+  padding: 20px 20px 20px 40px;
+  margin: 20px 0;
+
+  li {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+
+    strong {
+      color: darken($info, 30%);
+    }
+
+    &::before {
+      content: '✓';
+      color: $info;
+      font-weight: bold;
+      position: absolute;
+      left: -25px;
+    }
+  }
+}
+
+.policy-note {
+  background: lighten($info, 53%);
+  border: 1px solid lighten($info, 30%);
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 20px 0;
+
+  p {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: darken($info, 25%);
+    font-size: 0.95rem;
+
+    i {
+      color: $info;
+      font-size: 1.1rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.contact-info {
+  background: $light-gray;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+
+  p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    strong {
+      color: $darker-gray;
+      min-width: 80px;
+    }
+  }
+}
+
+// Links
+a {
+  color: $medium-gold;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: $dark-gold;
+    text-decoration: underline;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .policy-page {
+    padding: 20px 0;
+
+    .container {
+      padding: 0 15px;
+    }
+  }
+
+  .policy-page__header {
+    padding: 20px;
+    margin-bottom: 30px;
+
+    h1 {
+      font-size: 1.8rem;
+    }
+
+    p {
+      font-size: 1rem;
+    }
+  }
+
+  .policy-block {
+    padding: 20px;
+
+    h2 {
+      font-size: 1.3rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    &--seal-pack::before {
+      position: static;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+  }
+
+  .policy-grid {
+    gap: 15px;
+  }
+
+  .policy-item {
+    padding: 15px;
+
+    h4 {
+      font-size: 1rem;
+    }
+  }
+
+  .warning-box,
+  .seal-pack-notice,
+  .policy-note {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .policy-page {
+    padding: 15px 0;
+
+    .container {
+      padding: 0 10px;
+    }
+  }
+
+  .policy-page__header {
+    padding: 15px;
+
+    h1 {
+      font-size: 1.6rem;
+    }
+  }
+
+  .policy-block {
+    padding: 15px;
+
+    h2 {
+      font-size: 1.2rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+    }
+  }
+
+  .policy-grid {
+    gap: 12px;
+  }
+
+  .contact-info {
+    padding: 15px;
+
+    p {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+    }
+  }
+}
+
+// Print Styles
+@media print {
+  .policy-page {
+    background: $white !important;
+    padding: 0 !important;
+  }
+
+  .policy-page__header,
+  .policy-block {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+    page-break-inside: avoid;
+  }
+
+  .policy-block--seal-pack {
+    border-left: 3px solid #000 !important;
+  }
+}
+
+// High Contrast Mode Support
+@media (prefers-contrast: high) {
+  .policy-block {
+    border: 2px solid #000;
+  }
+
+  .policy-item--allowed {
+    border: 2px solid #008000;
+  }
+
+  .policy-item--not-allowed {
+    border: 2px solid #ff0000;
+  }
+}
+
+// Reduced Motion Support
+@media (prefers-reduced-motion: reduce) {
+  .policy-block {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+// Focus styles for accessibility
+a:focus,
+button:focus {
+  outline: 2px solid $medium-gold;
+  outline-offset: 2px;
+}
+
+// Loading animation for any dynamic content
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.policy-block {
+  animation: fadeIn 0.6s ease-out;
+}
+
+// Custom scrollbar for webkit browsers
+.policy-page__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.policy-page__content::-webkit-scrollbar-track {
+  background: $light-gray;
+  border-radius: 4px;
+}
+
+.policy-page__content::-webkit-scrollbar-thumb {
+  background: $light-gold;
+  border-radius: 4px;
+
+  &:hover {
+    background: $medium-gold;
+  }
+}

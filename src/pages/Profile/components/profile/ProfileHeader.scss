@@ -1,0 +1,1222 @@
+// ProfileHeader.scss - Premium Light Gold & White Theme (Mobile First)
+
+// ✅ VARIABLES - MOBILE FIRST APPROACH
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+$breakpoint-desktop: 1200px;
+
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 1.5rem;
+$spacing-lg: 2rem;
+$spacing-xl: 3rem;
+$spacing-xxl: 4rem;
+
+// ✅ GOLD COLOR PALETTE
+$gold-primary: #D4AF37;
+$gold-light: #F0E6D2;
+$gold-lighter: #F8F4E9;
+$gold-dark: #B8860B;
+$gold-darker: #8B6914;
+$white: #FFFFFF;
+$gray-light: #F5F5F5;
+$gray-medium: #E5E5E5;
+$gray-dark: #666666;
+$text-dark: #333333;
+$text-light: #666666;
+$success: #28a745;
+$error: #dc3545;
+$warning: #ffc107;
+
+// ✅ MIXINS - MOBILE FIRST
+@mixin mobile {
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-mobile}) and (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-tablet}) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: #{$breakpoint-desktop}) {
+    @content;
+  }
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+@mixin absolute-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+@mixin smooth-transition($property: all, $duration: 0.3s) {
+  transition: $property $duration cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@mixin glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@mixin shadow-soft {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+@mixin shadow-medium {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+@mixin shadow-strong {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ✅ ANIMATIONS
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(212, 175, 55, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+@keyframes profile-spinner {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes profile-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ✅ BASE PROFILE HEADER - MOBILE FIRST
+.profile-header {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  overflow: hidden;
+  background: $white;
+  color: $text-dark;
+  border-bottom: 1px solid $gray-medium;
+  animation: fadeInUp 0.6s ease-out;
+
+  @include tablet {
+    min-height: 280px;
+  }
+
+  @include desktop {
+    min-height: 320px;
+  }
+
+  @include large-desktop {
+    min-height: 360px;
+  }
+
+  // ✅ BACKGROUND
+  &__background {
+    @include absolute-cover;
+    z-index: 1;
+
+    &-gradient {
+      @include absolute-cover;
+      background: linear-gradient(135deg, $gold-lighter 0%, $white 50%, $gold-light 100%);
+      opacity: 0.95;
+    }
+
+    &-pattern {
+      @include absolute-cover;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23D4AF37' fill-opacity='0.03'%3E%3Cpath d='M0 0h60v60H0V0zm1 1h58v58H1V1z'/%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3Ccircle cx='15' cy='15' r='0.8'/%3E%3Ccircle cx='45' cy='45' r='0.8'/%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.6;
+    }
+  }
+
+  // ✅ CONTENT - MOBILE OPTIMIZED
+  &__content {
+    position: relative;
+    z-index: 2;
+    padding: $spacing-lg $spacing-sm;
+    height: 100%;
+
+    @include tablet {
+      padding: $spacing-xl $spacing-md;
+    }
+
+    @include desktop {
+      padding: $spacing-xxl $spacing-lg;
+    }
+  }
+
+  // ✅ MOBILE MENU BUTTON - PROMINENT ON MOBILE
+  &__mobile-menu-btn {
+    display: flex;
+    position: absolute;
+    top: $spacing-sm;
+    left: $spacing-sm;
+    width: 48px;
+    height: 48px;
+    @include flex-center;
+    background: $white;
+    border: 2px solid $gold-primary;
+    border-radius: 12px;
+    color: $gold-primary;
+    cursor: pointer;
+    font-size: 1.3rem;
+    @include smooth-transition;
+    @include shadow-medium;
+    z-index: 100;
+
+    &:hover {
+      background: $gold-primary;
+      color: $white;
+      transform: scale(1.05);
+      @include shadow-strong;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &--active {
+      background: $gold-primary;
+      color: $white;
+      transform: rotate(90deg);
+
+      i {
+        transform: rotate(0deg);
+      }
+    }
+
+    // ✅ HIDE ON TABLET AND DESKTOP
+    @include tablet {
+      display: none !important;
+    }
+
+    @include desktop {
+      display: none !important;
+    }
+
+    i {
+      @include smooth-transition(transform);
+    }
+  }
+
+  // ✅ MAIN LAYOUT - MOBILE COLUMN
+  &__main {
+    @include flex-column;
+    gap: $spacing-lg;
+    align-items: center;
+    margin-top: $spacing-xl;
+
+    @include tablet {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: $spacing-xl;
+      margin-top: $spacing-lg;
+    }
+
+    @include desktop {
+      @include flex-between;
+      align-items: flex-start;
+      margin-top: 0;
+    }
+  }
+
+  // ✅ AVATAR SECTION - CENTERED ON MOBILE
+  &__avatar-section {
+    @include flex-column;
+    align-items: center;
+    gap: $spacing-md;
+    width: 100%;
+
+    @include tablet {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: $spacing-lg;
+    }
+
+    @include desktop {
+      flex: 1;
+      gap: $spacing-xl;
+    }
+  }
+
+  &__avatar-container {
+    position: relative;
+    flex-shrink: 0;
+
+    @include mobile {
+      margin-bottom: $spacing-xs;
+    }
+  }
+
+  &__avatar {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid $gold-primary;
+    cursor: pointer;
+    @include smooth-transition;
+    overflow: hidden;
+    background: $white;
+    @include shadow-medium;
+    animation: pulse-gold 2s infinite;
+
+    @include tablet {
+      width: 120px;
+      height: 120px;
+      border-width: 4px;
+    }
+
+    @include desktop {
+      width: 140px;
+      height: 140px;
+      border-width: 5px;
+    }
+
+    @include large-desktop {
+      width: 160px;
+      height: 160px;
+    }
+
+    &:hover:not(&--uploading) {
+      border-color: $gold-dark;
+      transform: scale(1.05);
+      @include shadow-strong;
+      animation: none;
+
+      .profile-header__avatar-overlay {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    &:active:not(&--uploading) {
+      transform: scale(0.95);
+    }
+
+    &--uploading {
+      cursor: not-allowed;
+      opacity: 0.7;
+      border-color: $gray-medium;
+      animation: none;
+    }
+  }
+
+  &__avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    @include smooth-transition(transform, 0.5s);
+  }
+
+  &__avatar-overlay {
+    @include absolute-cover;
+    @include flex-center;
+    flex-direction: column;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.95) 0%, rgba(184, 134, 11, 0.9) 100%);
+    color: $white;
+    opacity: 0;
+    border-radius: 50%;
+    font-weight: 600;
+    transform: scale(0.9);
+    @include smooth-transition;
+    padding: $spacing-sm;
+    text-align: center;
+  }
+
+  &__uploading-indicator,
+  &__edit-indicator {
+    @include flex-center;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    text-align: center;
+
+    @include tablet {
+      font-size: 0.85rem;
+    }
+
+    @include desktop {
+      font-size: 0.9rem;
+    }
+  }
+
+  &__spinner {
+    @include flex-center;
+    gap: 0.25rem;
+
+    &-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: $white;
+      animation: profile-spinner 1.4s ease-in-out infinite both;
+
+      &:nth-child(1) { animation-delay: -0.32s; }
+      &:nth-child(2) { animation-delay: -0.16s; }
+      &:nth-child(3) { animation-delay: 0s; }
+
+      @include tablet {
+        width: 6px;
+        height: 6px;
+      }
+    }
+  }
+
+  // ✅ ADMIN BADGE - MOBILE OPTIMIZED
+  &__admin-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: linear-gradient(135deg, $gold-primary 0%, $gold-dark 100%);
+    color: $white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    @include flex-center;
+    border: 2px solid $white;
+    cursor: pointer;
+    font-size: 0.8rem;
+    @include shadow-medium;
+    @include smooth-transition;
+    z-index: 5;
+
+    @include tablet {
+      width: 36px;
+      height: 36px;
+      font-size: 0.9rem;
+      border-width: 3px;
+    }
+
+    @include desktop {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+      @include shadow-strong;
+
+      .profile-header__admin-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__admin-tooltip {
+    position: absolute;
+    bottom: -42px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: $text-dark;
+    color: $white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    @include smooth-transition;
+    z-index: 20;
+    @include shadow-medium;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 5px solid $text-dark;
+    }
+
+    @include tablet {
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+    }
+  }
+
+  &__file-input {
+    display: none;
+  }
+
+  // ✅ ERROR MESSAGE - MOBILE FRIENDLY
+  &__error-message {
+    @include flex-center;
+    gap: 0.5rem;
+    margin-top: $spacing-sm;
+    padding: $spacing-sm;
+    background: rgba($error, 0.05);
+    border: 1px solid rgba($error, 0.2);
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: $error;
+    text-align: center;
+    @include smooth-transition;
+    animation: slideInRight 0.4s ease-out;
+    line-height: 1.4;
+
+    @include tablet {
+      flex-direction: row;
+      font-size: 0.8rem;
+    }
+
+    @include desktop {
+      font-size: 0.85rem;
+    }
+
+    i {
+      font-size: 0.9rem;
+      flex-shrink: 0;
+
+      @include tablet {
+        font-size: 1rem;
+      }
+    }
+  }
+
+  // ✅ USER INFORMATION - MOBILE OPTIMIZED
+  &__info {
+    flex: 1;
+    text-align: center;
+    width: 100%;
+
+    @include tablet {
+      text-align: left;
+    }
+  }
+
+  &__name-section {
+    margin-bottom: $spacing-md;
+
+    @include mobile {
+      margin-bottom: $spacing-sm;
+    }
+  }
+
+  &__name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: $text-dark;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    flex-wrap: wrap;
+    justify-content: center;
+    line-height: 1.2;
+    @include text-ellipsis;
+    max-width: 100%;
+
+    @include tablet {
+      font-size: 1.75rem;
+      justify-content: flex-start;
+    }
+
+    @include desktop {
+      font-size: 2rem;
+    }
+
+    @include large-desktop {
+      font-size: 2.25rem;
+    }
+  }
+
+  &__admin-tag {
+    background: linear-gradient(135deg, $gold-primary 0%, $gold-dark 100%);
+    color: $white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    @include flex-center;
+    gap: 0.3rem;
+    @include shadow-soft;
+    @include smooth-transition;
+    white-space: nowrap;
+
+    @include tablet {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.8rem;
+    }
+
+    @include desktop {
+      font-size: 0.8rem;
+      padding: 0.4rem 1rem;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      @include shadow-medium;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &__welcome {
+    font-size: 0.9rem;
+    color: $text-light;
+    margin: 0;
+    font-weight: 500;
+    opacity: 0.9;
+    line-height: 1.4;
+
+    @include tablet {
+      font-size: 1rem;
+    }
+
+    @include desktop {
+      font-size: 1.1rem;
+    }
+  }
+
+  // ✅ ACTIONS SECTION - MOBILE OPTIMIZED
+  &__actions {
+    @include flex-wrap;
+    gap: $spacing-sm;
+    justify-content: center;
+    width: 100%;
+
+    @include tablet {
+      @include flex-center;
+      flex-direction: column;
+      gap: $spacing-md;
+      width: auto;
+      margin-top: 0;
+      min-width: 160px;
+    }
+
+    @include desktop {
+      flex-direction: row;
+      align-items: stretch;
+      min-width: 200px;
+    }
+
+    @include large-desktop {
+      min-width: 220px;
+    }
+  }
+
+  &__action-btn {
+    background: $white;
+    border: 2px solid $gold-light;
+    color: $text-dark;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    @include smooth-transition;
+    @include flex-center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    min-height: 46px;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    @include shadow-soft;
+    min-width: 120px;
+
+    @include tablet {
+      padding: 0.875rem 1.25rem;
+      font-size: 0.9rem;
+      min-height: 50px;
+      min-width: 140px;
+      flex: none;
+    }
+
+    @include desktop {
+      padding: 1rem 1.5rem;
+      min-width: 160px;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.6s ease;
+    }
+
+    &:hover {
+      border-color: $gold-primary;
+      background: $gold-lighter;
+      transform: translateY(-2px);
+      @include shadow-medium;
+
+      &::before {
+        left: 100%;
+      }
+
+      .profile-header__btn-badge {
+        transform: scale(1.1);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &--admin {
+      background: linear-gradient(135deg, $gold-primary 0%, $gold-dark 100%);
+      border-color: $gold-primary;
+      color: $white;
+
+      &:hover {
+        background: linear-gradient(135deg, $gold-dark 0%, $gold-darker 100%);
+        border-color: $gold-dark;
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    &--logout {
+      background: $white;
+      border-color: $gray-medium;
+      color: $text-dark;
+
+      &:hover {
+        background: $gray-light;
+        border-color: $gray-dark;
+        color: $text-dark;
+      }
+    }
+  }
+
+  &__btn-text {
+    @include text-ellipsis;
+    max-width: 80px;
+
+    @include tablet {
+      max-width: none;
+    }
+  }
+
+  &__btn-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: linear-gradient(135deg, $error 0%, darken($error, 15%) 100%);
+    color: $white;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 8px;
+    font-weight: 700;
+    @include shadow-soft;
+    @include smooth-transition;
+    z-index: 2;
+    line-height: 1;
+
+    @include tablet {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      top: -8px;
+      right: -8px;
+    }
+  }
+
+  // ✅ UPLOAD PROGRESS - MOBILE OPTIMIZED
+  &__upload-progress {
+    margin-top: $spacing-lg;
+    padding: $spacing-md;
+    background: $gold-lighter;
+    border-radius: 10px;
+    border: 1px solid $gold-light;
+    width: 100%;
+    animation: fadeInUp 0.4s ease-out;
+
+    @include mobile {
+      margin-top: $spacing-md;
+      padding: $spacing-sm;
+    }
+  }
+
+  &__progress-bar {
+    width: 100%;
+    height: 5px;
+    background: $gray-medium;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    @include shadow-soft;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $gold-primary 0%, $gold-dark 50%, $gold-primary 100%);
+    border-radius: 3px;
+    animation: profile-progress 1.5s ease-in-out infinite;
+    background-size: 200% 100%;
+    width: 60%;
+  }
+
+  &__progress-text {
+    font-size: 0.8rem;
+    color: $text-light;
+    text-align: center;
+    display: block;
+    font-weight: 500;
+    line-height: 1.4;
+
+    @include tablet {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+// ✅ MOBILE SPECIFIC ENHANCEMENTS
+@include mobile {
+  .profile-header {
+    // Improved touch targets
+    &__mobile-menu-btn {
+      width: 44px;
+      height: 44px;
+    }
+
+    &__avatar {
+      width: 90px;
+      height: 90px;
+    }
+
+    &__action-btn {
+      min-height: 44px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.82rem;
+    }
+
+
+    &__main {
+      gap: $spacing-md;
+      margin-top: $spacing-lg;
+    }
+
+    // Improved text readability
+    &__name {
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    &__welcome {
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    // Better action button layout
+    &__actions {
+      gap: $spacing-xs;
+    }
+
+    &__action-btn {
+      min-width: 110px;
+    }
+
+    // Enhanced error message for mobile
+    &__error-message {
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      padding: 0.75rem;
+
+      i {
+        font-size: 0.85rem;
+      }
+    }
+
+    // Improved admin badge positioning
+    &__admin-badge {
+      width: 28px;
+      height: 28px;
+      font-size: 0.75rem;
+    }
+
+    // Better progress indicator
+    &__upload-progress {
+      margin-top: $spacing-md;
+    }
+  }
+}
+
+// ✅ SMALL MOBILE OPTIMIZATIONS (Phones under 360px)
+@media (max-width: 360px) {
+  .profile-header {
+    &__content {
+      padding: 3.5rem $spacing-xs $spacing-sm;
+    }
+
+    &__avatar {
+      width: 80px;
+      height: 80px;
+    }
+
+    &__name {
+      font-size: 1.3rem;
+    }
+
+    &__action-btn {
+      min-width: 100px;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.78rem;
+
+      &__btn-text {
+        max-width: 60px;
+      }
+    }
+
+    &__actions {
+      gap: 0.25rem;
+    }
+
+    &__mobile-menu-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// ✅ TABLET ENHANCEMENTS
+@include tablet {
+  .profile-header {
+    &__avatar-section {
+      gap: $spacing-lg;
+    }
+
+    &__actions {
+      min-width: 160px;
+    }
+
+    &__content {
+      padding: $spacing-xl $spacing-md;
+    }
+
+    &__main {
+      gap: $spacing-xl;
+    }
+  }
+}
+
+// ✅ DESKTOP ENHANCEMENTS
+@include desktop {
+  .profile-header {
+    &__avatar:hover {
+      transform: scale(1.05);
+    }
+
+    &__action-btn {
+      @include smooth-transition;
+
+      &:hover {
+        transform: translateY(-2px);
+        @include shadow-medium;
+      }
+    }
+
+    &__content {
+      padding: $spacing-xxl $spacing-lg;
+    }
+  }
+}
+
+// ✅ LARGE DESKTOP ENHANCEMENTS
+@include large-desktop {
+  .profile-header {
+    &__content {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+  }
+}
+
+// ✅ LOADING STATES
+.profile-header {
+  &--loading {
+    .profile-header__avatar,
+    .profile-header__name {
+      background: linear-gradient(90deg, $gray-light 25%, $gray-medium 50%, $gray-light 75%);
+      background-size: 200px 100%;
+      animation: shimmer 1.5s infinite linear;
+      color: transparent;
+    }
+
+    .profile-header__avatar {
+      border-color: $gray-medium;
+    }
+  }
+}
+
+// ✅ TOUCH DEVICE OPTIMIZATIONS
+@media (hover: none) and (pointer: coarse) {
+  .profile-header {
+    &__avatar:hover {
+      transform: none !important;
+    }
+
+    &__action-btn:hover {
+      transform: none !important;
+    }
+
+    &__admin-badge:hover {
+      transform: none !important;
+
+      .profile-header__admin-tooltip {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    // Show tooltips on tap for touch devices
+    &__admin-badge:active {
+      .profile-header__admin-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+// ✅ PRINT STYLES
+@media print {
+  .profile-header {
+    background: $white !important;
+    color: $text-dark !important;
+    min-height: auto;
+    border-bottom: 2px solid $gold-primary;
+
+    &__background {
+      display: none;
+    }
+
+    &__mobile-menu-btn,
+    &__actions {
+      display: none;
+    }
+
+    &__avatar-overlay {
+      display: none;
+    }
+
+    &__admin-badge {
+      background: $gray-dark !important;
+      color: $white !important;
+      border-color: $text-dark !important;
+    }
+  }
+}
+
+// ✅ ACCESSIBILITY - REDUCED MOTION
+@media (prefers-reduced-motion: reduce) {
+  .profile-header {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    &__avatar {
+      animation: none;
+    }
+
+    &__progress-fill {
+      animation: none;
+    }
+  }
+}
+
+// ✅ HIGH CONTRAST MODE
+@media (prefers-contrast: high) {
+  .profile-header {
+    border-color: $text-dark;
+
+    &__avatar {
+      border-width: 3px;
+      border-color: $text-dark;
+    }
+
+    &__mobile-menu-btn {
+      border-width: 3px;
+      border-color: $text-dark;
+    }
+
+    &__action-btn {
+      border-width: 2px;
+    }
+  }
+}
+
+// ✅ DARK MODE SUPPORT (Optional - if needed later)
+// @media (prefers-color-scheme: dark) {
+//   .profile-header {
+//     background: #1a1a1a;
+//     color: #ffffff;
+//     border-bottom-color: #333;
+//   }
+// }
+
+// ✅ iOS SAFARI SPECIFIC FIXES
+@supports (-webkit-touch-callout: none) {
+  .profile-header {
+    &__avatar {
+      -webkit-touch-callout: none;
+    }
+
+    &__action-btn {
+      -webkit-tap-highlight-color: rgba(212, 175, 55, 0.1);
+    }
+  }
+}
+
+// ✅ FIREFOX SPECIFIC FIXES
+@-moz-document url-prefix() {
+  .profile-header {
+    &__background-pattern {
+      background-attachment: fixed;
+    }
+  }
+}
+
+// ✅ INTERNET EXPLORER FALLBACKS
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .profile-header {
+    &__background-gradient {
+      background: $gold-lighter;
+    }
+
+    &__avatar-overlay {
+      background: $gold-primary;
+    }
+  }
+}

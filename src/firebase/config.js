@@ -4,18 +4,19 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCIij0TnoYPTHAi_gdjDn3PG47Ea2jtdNY",
-  authDomain: "alena-trends.firebaseapp.com",
-  projectId: "alena-trends",
-  storageBucket: "alena-trends.firebasestorage.app",
-  messagingSenderId: "86663572684",
-  appId: "1:86663572684:web:cdc55b722d3a27f4c00728",
-  measurementId: "G-YXSHBPZQQJ",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);      // ✅ Initialize Auth first
+export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app); // ✅ Then Storage
+export const storage = getStorage(app);
+
 export default app;

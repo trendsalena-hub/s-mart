@@ -1,0 +1,540 @@
+// PaymentPage.scss - Light Gold & White Theme
+// ===========================================
+
+// Color Palette
+$primary-gold: #d4af37;
+$light-gold: #f4e8c1;
+$soft-gold: #e8dcb5;
+$dark-gold: #b8941f;
+$gold-gradient: linear-gradient(135deg, #d4af37 0%, #f4e8c1 100%);
+$gold-gradient-light: linear-gradient(135deg, #f4e8c1 0%, #ffffff 100%);
+
+$pure-white: #ffffff;
+$off-white: #fafafa;
+$light-gray: #f8f9fa;
+$medium-gray: #e9ecef;
+$border-gray: #dee2e6;
+
+$text-dark: #2c2c2c;
+$text-medium: #495057;
+$text-light: #6c757d;
+$text-muted: #868e96;
+
+$success-color: #28a745;
+$warning-color: #ffc107;
+$error-color: #dc3545;
+$info-color: #17a2b8;
+
+// Shadows
+$shadow-sm: 0 2px 8px rgba(212, 175, 55, 0.08);
+$shadow-md: 0 4px 20px rgba(212, 175, 55, 0.12);
+$shadow-lg: 0 8px 40px rgba(212, 175, 55, 0.15);
+$shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.2);
+
+// Transitions
+$transition-fast: 0.2s ease;
+$transition-medium: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Border Radius
+$border-radius-sm: 8px;
+$border-radius-md: 12px;
+$border-radius-lg: 16px;
+$border-radius-xl: 20px;
+
+// Mixins
+@mixin gold-gradient-text {
+  background: linear-gradient(135deg, $dark-gold, $primary-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin card-hover {
+  transform: translateY(-2px);
+  box-shadow: $shadow-lg;
+  border-color: $primary-gold;
+}
+
+@mixin gold-button {
+  background: $gold-gradient;
+  color: $pure-white;
+  border: none;
+  font-weight: 600;
+  transition: all $transition-medium;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-gold;
+    background: linear-gradient(135deg, $dark-gold, $primary-gold);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+}
+
+// Base Styles
+.payment-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, $off-white 0%, $pure-white 50%, $light-gold 100%);
+  padding: 2rem 0;
+  display: flex;
+  align-items: center;
+  
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+}
+
+.payment-page__box {
+  background: $pure-white;
+  border-radius: $border-radius-lg;
+  padding: 3rem;
+  box-shadow: $shadow-lg;
+  border: 1px solid $light-gold;
+  text-align: center;
+}
+
+// Header
+.payment-page__header {
+  margin-bottom: 2rem;
+  
+  .payment-icon {
+    font-size: 3rem;
+    color: $primary-gold;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    @include gold-gradient-text;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    color: $text-light;
+    font-size: 1.1rem;
+  }
+}
+
+// Summary
+.payment-page__summary {
+  background: $off-white;
+  border-radius: $border-radius-md;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid $light-gold;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  color: $text-medium;
+  
+  &.total {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $text-dark;
+    border-top: 2px solid $light-gold;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+  }
+}
+
+// Payment Methods
+.payment-methods {
+  text-align: left;
+  margin-bottom: 2rem;
+  
+  h3 {
+    color: $text-dark;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+}
+
+.payment-methods__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.payment-method {
+  background: $pure-white;
+  border: 2px solid $medium-gray;
+  border-radius: $border-radius-md;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all $transition-medium;
+  
+  &:hover {
+    @include card-hover;
+  }
+  
+  &--selected {
+    border-color: $primary-gold;
+    background: rgba(212, 175, 55, 0.03);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: $gold-gradient;
+      border-radius: $border-radius-md 0 0 $border-radius-md;
+    }
+  }
+}
+
+.payment-method__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.payment-method__icon {
+  width: 50px;
+  height: 50px;
+  background: $gold-gradient-light;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  i {
+    font-size: 1.5rem;
+    color: $primary-gold;
+  }
+}
+
+.payment-method__info {
+  flex: 1;
+  text-align: left;
+  
+  h4 {
+    color: $text-dark;
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+  }
+  
+  p {
+    color: $text-light;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+.payment-method__badge {
+  background: $gold-gradient;
+  color: $pure-white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+// Payment Form
+.payment-form {
+  text-align: left;
+  margin-top: 2rem;
+}
+
+.payment-form__section {
+  background: $off-white;
+  border-radius: $border-radius-md;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid $light-gold;
+  
+  h4 {
+    color: $text-dark;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+}
+
+// UPI Apps Grid
+.upi-apps, .card-types {
+  margin-bottom: 1.5rem;
+  
+  p {
+    color: $text-medium;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+}
+
+.upi-apps__grid, .card-types__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.upi-app, .card-type {
+  background: $pure-white;
+  border: 2px solid $medium-gray;
+  border-radius: $border-radius-md;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $light-gold;
+  }
+  
+  &--selected {
+    border-color: $primary-gold;
+    background: rgba(212, 175, 55, 0.05);
+    
+    i {
+      color: $primary-gold;
+    }
+  }
+  
+  i {
+    font-size: 1.5rem;
+    color: $text-light;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  span {
+    color: $text-dark;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+}
+
+// Form Elements
+.form-group {
+  margin-bottom: 1.5rem;
+  
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: $text-dark;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid $medium-gray;
+  border-radius: $border-radius-md;
+  background: $pure-white;
+  color: $text-dark;
+  font-size: 0.9rem;
+  transition: all $transition-fast;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-gold;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  }
+  
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+}
+
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  padding-right: 3rem;
+}
+
+small {
+  color: $text-light;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+// Payment Button
+.payment-btn {
+  @include gold-button;
+  width: 100%;
+  padding: 1.25rem;
+  font-size: 1.1rem;
+  border-radius: $border-radius-md;
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+// Security Info
+.payment-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: $text-light;
+  font-size: 0.9rem;
+  
+  i {
+    color: $primary-gold;
+  }
+}
+
+// Payment Status
+.payment-status {
+  padding: 2rem 0;
+  
+  &__icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    
+    &.processing {
+      color: $primary-gold;
+    }
+    
+    &.success {
+      color: $success-color;
+    }
+    
+    &.failed {
+      color: $error-color;
+    }
+  }
+  
+  &__title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    
+    &.processing {
+      @include gold-gradient-text;
+    }
+    
+    &.success {
+      color: $success-color;
+    }
+    
+    &.failed {
+      color: $error-color;
+    }
+  }
+  
+  &__message {
+    color: $text-medium;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: $border-radius-md;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all $transition-medium;
+  font-size: 0.9rem;
+  
+  &--primary {
+    @include gold-button;
+  }
+}
+
+// Loading State
+.payment-spinner {
+  font-size: 3rem;
+  color: $primary-gold;
+  margin-bottom: 1rem;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .payment-page {
+    padding: 1rem 0;
+    
+    .container {
+      padding: 0 1rem;
+    }
+  }
+  
+  .payment-page__box {
+    padding: 2rem 1.5rem;
+  }
+  
+  .payment-page__header {
+    h2 {
+      font-size: 1.75rem;
+    }
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .upi-apps__grid, .card-types__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .payment-method__header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .payment-method__info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-page__box {
+    padding: 1.5rem 1rem;
+  }
+  
+  .upi-apps__grid, .card-types__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .payment-btn {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// Animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}

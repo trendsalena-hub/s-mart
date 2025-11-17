@@ -1,0 +1,371 @@
+// Profile.scss - Premium Gold Theme (Light Mode Only)
+
+// ✅ CSS VARIABLES
+:root {
+  --gold: #c9a86a;
+  --gold-dark: #b89450;
+  --gold-light: #fcf6e9;
+  --gold-primary: #D4AF37;
+  --gold-darker: #8B6914;
+  --cream: #fffaf3;
+  --sidebar-border: #ecd9b8;
+  --text-dark: #372c1a;
+  --text-light: #6b7280;
+  --white: #ffffff;
+  --error: #ef4444;
+  --success: #10b981;
+}
+
+// ✅ BREAKPOINTS
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 900px;
+
+// ✅ CONTAINER
+.profile-page {
+  min-height: 100vh;
+  background: var(--gold-light);
+  font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+  color: var(--text-dark);
+  position: relative;
+  overflow-x: hidden;
+}
+
+// ✅ LAYOUT: Sidebar + Content
+.profile-page__layout {
+  display: flex;
+  flex-direction: row;
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 22px 0 48px 0;
+  gap: 32px;
+  align-items: flex-start;
+  position: relative;
+
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    flex-direction: column;
+    max-width: 98vw;
+    padding: 13px 2vw 28px 2vw;
+    gap: 14px;
+  }
+}
+
+// ✅ OVERLAY (Mobile)
+.profile-page__overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  animation: fadeIn 0.3s ease;
+
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    display: block;
+  }
+}
+
+// ✅ SIDEBAR WRAPPER (Mobile Drawer)
+.profile-sidebar-wrapper {
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 320px;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+
+    &--closed {
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
+
+    &--open {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+  }
+}
+
+// ✅ SIDEBAR (Desktop & Mobile)
+.profile-sidebar {
+  width: 240px;
+  position: relative;
+  z-index: 100;
+
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    width: 100%;
+    position: static;
+    order: 0;
+    margin-bottom: 14px;
+    display: block !important;
+  }
+
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    width: 100%;
+    position: static;
+    order: 0;
+    margin-bottom: 0;
+    display: block !important;
+  }
+}
+
+// ✅ MAIN CONTENT
+.profile-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    flex: 1;
+  }
+}
+
+// ✅ PROFILE CARD
+.profile-page__card {
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: 0 2px 20px rgba(225, 199, 129, 0.1);
+  padding: 38px 36px 28px 36px;
+  min-height: 460px;
+  margin-top: 0;
+  animation: slideInUp 0.5s ease;
+
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    padding: 24px;
+    min-height: auto;
+  }
+
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    padding: 10px 4px 11px 4px;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// ✅ BUTTON STYLES
+button,
+a.btn {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--white);
+  border-radius: 8px;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--gold-dark), #a37a3e);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(201, 168, 106, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, var(--gold-primary), var(--gold-darker));
+
+    &:hover {
+      background: linear-gradient(135deg, var(--gold-darker), #6b5310);
+    }
+  }
+
+  &--secondary {
+    background: var(--white);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+
+    &:hover {
+      background: var(--gold-light);
+    }
+  }
+
+  &--danger {
+    background: linear-gradient(135deg, var(--error), #dc2626);
+
+    &:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+  }
+
+  &--success {
+    background: linear-gradient(135deg, var(--success), #059669);
+
+    &:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+    }
+  }
+}
+
+// ✅ ANIMATIONS
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// ✅ STATUS MESSAGES
+.profile-page__status {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideInUp 0.4s ease;
+
+  &--error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+
+  &--success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// ✅ MOBILE OPTIMIZATIONS
+@media (max-width: #{$breakpoint-mobile - 1px}) {
+  .profile-page {
+    &__layout {
+      padding: 0;
+    }
+
+    &__card {
+      border-radius: 0;
+      box-shadow: none;
+      border-top: 1px solid var(--sidebar-border);
+    }
+  }
+
+  button,
+  a.btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+// ✅ TABLET OPTIMIZATIONS
+@media (max-width: #{$breakpoint-tablet - 1px}) {
+  .profile-page {
+    &__layout {
+      flex-direction: column;
+      padding: 13px 2vw 28px 2vw;
+    }
+  }
+}
+
+// ✅ ACCESSIBILITY - REDUCED MOTION
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// ✅ HIGH CONTRAST MODE
+@media (prefers-contrast: high) {
+  .profile-page {
+    &__card {
+      border: 2px solid var(--text-dark);
+    }
+  }
+
+  button,
+  a.btn {
+    border: 2px solid currentColor;
+  }
+}
+
+// ✅ LARGE TEXT MODE (1920px+)
+@media (min-width: 1920px) {
+  .profile-page {
+    &__card {
+      padding: 48px 48px 36px 48px;
+    }
+  }
+
+  button,
+  a.btn {
+    padding: 0.9rem 1.8rem;
+    font-size: 1.1rem;
+  }
+}
+
+// ✅ PRINT STYLES
+@media print {
+  .profile-page {
+    &__overlay {
+      display: none !important;
+    }
+
+    .profile-sidebar-wrapper {
+      display: none !important;
+    }
+
+    .profile-page__card {
+      box-shadow: none;
+      border: 1px solid #ccc;
+      page-break-inside: avoid;
+    }
+  }
+
+  button {
+    display: none;
+  }
+}

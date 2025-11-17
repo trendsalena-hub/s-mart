@@ -21,6 +21,7 @@ const QuickView = () => {
   const [isInCart, setIsInCart] = useState(false);
   const [loading, setLoading] = useState(true);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
 
   // Use product images array or fallback to single image
   const productImages = product?.images && product.images.length > 0 
@@ -138,6 +139,9 @@ const QuickView = () => {
         tags: product.tags,
         sku: product.sku,
         featured: product.featured,
+        offer: product.offer,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
         addedAt: new Date().toISOString()
       };
 
@@ -173,6 +177,7 @@ const QuickView = () => {
   };
 
   const hasDiscount = product?.originalPrice && product.originalPrice > product.price;
+  const hasActiveOffer = product?.offer?.enabled && product.offer.value > 0;
 
   // Calculate discount percentage if not provided
   const calculateDiscountPercentage = () => {
@@ -181,10 +186,31 @@ const QuickView = () => {
     return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
   };
 
+  // Calculate offer discount
+  const calculateOfferDiscount = () => {
+    if (!hasActiveOffer) return 0;
+    if (product.offer.type === 'percentage') {
+      return (product.price * product.offer.value) / 100;
+    } else {
+      return product.offer.value;
+    }
+  };
+
+  // Calculate final price after offer
+  const calculateFinalPrice = () => {
+    if (!product) return 0;
+    let finalPrice = product.price;
+    
+    if (hasActiveOffer) {
+      finalPrice -= calculateOfferDiscount();
+    }
+    
+    return Math.max(finalPrice, 0);
+  };
+
   // Calculate total price based on quantity
   const calculateTotalPrice = () => {
-    if (!product) return 0;
-    return product.price * quantity;
+    return calculateFinalPrice() * quantity;
   };
 
   const calculateOriginalTotalPrice = () => {
@@ -193,19 +219,27 @@ const QuickView = () => {
   };
 
   const calculateTotalSavings = () => {
-    if (!product || !hasDiscount) return 0;
-    return (product.originalPrice - product.price) * quantity;
+    if (!product) return 0;
+    
+    let savings = 0;
+    if (hasDiscount) {
+      savings += (product.originalPrice - product.price) * quantity;
+    }
+    if (hasActiveOffer) {
+      savings += calculateOfferDiscount() * quantity;
+    }
+    
+    return savings;
   };
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // Check if offer is valid
+  const isOfferValid = () => {
+    if (!hasActiveOffer) return false;
+    if (!product.offer.validUntil) return true;
+    
+    const now = new Date();
+    const validUntil = new Date(product.offer.validUntil);
+    return now <= validUntil;
   };
 
   const handleQuantityChange = (type) => {
@@ -237,8 +271,8 @@ const QuickView = () => {
       image: productImages[0],
       images: productImages,
       title: product.title,
-      price: product.price,
-      originalPrice: product.originalPrice,
+      price: calculateFinalPrice(), // Use final price after offer
+      originalPrice: product.originalPrice || product.price,
       discount: product.discount,
       badge: product.badge,
       category: product.category,
@@ -247,7 +281,8 @@ const QuickView = () => {
       sku: product.sku,
       size: selectedSize,
       color: selectedColor,
-      quantity: quantity
+      quantity: quantity,
+      offer: hasActiveOffer ? product.offer : null
     };
     
     addToCart(productWithDetails);
@@ -255,7 +290,6 @@ const QuickView = () => {
       `${quantity}x ${product.title}${selectedSize ? ` (Size: ${selectedSize})` : ''}${selectedColor ? ` (Color: ${selectedColor})` : ''} added to cart!`, 
       'success'
     );
-    setTimeout(() => navigate(-1), 1000);
   };
 
   const handleBuyNow = () => {
@@ -275,8 +309,8 @@ const QuickView = () => {
       image: productImages[0],
       images: productImages,
       title: product.title,
-      price: product.price,
-      originalPrice: product.originalPrice,
+      price: calculateFinalPrice(), // Use final price after offer
+      originalPrice: product.originalPrice || product.price,
       discount: product.discount,
       badge: product.badge,
       category: product.category,
@@ -285,7 +319,8 @@ const QuickView = () => {
       sku: product.sku,
       size: selectedSize,
       color: selectedColor,
-      quantity: quantity
+      quantity: quantity,
+      offer: hasActiveOffer ? product.offer : null
     };
 
     if (!user) {
@@ -317,39 +352,50 @@ const QuickView = () => {
   }
 
   const discountPercentage = calculateDiscountPercentage();
+  const finalPrice = calculateFinalPrice();
+  const offerValid = isOfferValid();
 
   return (
     <div className="quick-view">
       <div className="container">
-        <button className="quick-view__back-btn" onClick={() => navigate(-1)}>
-          <i className="fas fa-arrow-left"></i>
-          Back
-        </button>
-
         <div className="quick-view__content">
           {/* Left Side - Images */}
           <div className="quick-view__images">
             <div className="quick-view__main-image">
               <img src={productImages[selectedImage]} alt={product.title} />
               
-              {/* Featured Badge */}
-              {product.featured && (
-                <span className="quick-view__featured-badge">
-                  <i className="fas fa-star"></i>
-                  Featured
-                </span>
-              )}
+              {/* Multiple Badges */}
+              <div className="quick-view__badges">
+                {/* Featured Badge */}
+                {product.featured && (
+                  <span className="quick-view__badge quick-view__badge--featured">
+                    <i className="fas fa-star"></i>
+                    Featured
+                  </span>
+                )}
 
-              {product.badge && (
-                <span className={`quick-view__badge quick-view__badge--${product.badge.toLowerCase()}`}>
-                  {product.badge}
-                </span>
-              )}
-              {hasDiscount && discountPercentage > 0 && (
-                <span className="quick-view__discount-badge">
-                  {discountPercentage}% OFF
-                </span>
-              )}
+                {/* Product Badge */}
+                {product.badge && (
+                  <span className={`quick-view__badge quick-view__badge--${product.badge.toLowerCase()}`}>
+                    {product.badge}
+                  </span>
+                )}
+
+                {/* Discount Badge */}
+                {hasDiscount && discountPercentage > 0 && (
+                  <span className="quick-view__badge quick-view__badge--discount">
+                    {discountPercentage}% OFF
+                  </span>
+                )}
+
+                {/* Offer Badge */}
+                {hasActiveOffer && offerValid && (
+                  <span className="quick-view__badge quick-view__badge--offer">
+                    <i className="fas fa-gift"></i>
+                    {product.offer.title}
+                  </span>
+                )}
+              </div>
               
               {/* Stock Status */}
               {product.stock !== undefined && product.stock < 10 && product.stock > 0 && (
@@ -362,6 +408,8 @@ const QuickView = () => {
                   Out of Stock
                 </span>
               )}
+
+              {/* Wishlist Button */}
               <button 
                 className={`quick-view__wishlist-btn ${isInWishlist ? 'quick-view__wishlist-btn--active' : ''}`}
                 onClick={handleWishlistToggle}
@@ -371,6 +419,8 @@ const QuickView = () => {
                 <i className={`fas fa-heart ${wishlistLoading ? 'fa-spin' : ''}`}></i>
               </button>
             </div>
+
+            {/* Thumbnails */}
             <div className="quick-view__thumbnails">
               {productImages.map((img, index) => (
                 <button
@@ -387,40 +437,30 @@ const QuickView = () => {
           {/* Right Side - Details */}
           <div className="quick-view__details">
             {/* Category & Brand */}
-            {(product.category || product.brand) && (
-              <div className="quick-view__meta">
-                {product.category && (
-                  <span className="quick-view__category">
-                    <i className="fas fa-tag"></i>
-                    {product.category}
-                  </span>
-                )}
-                {product.brand && (
-                  <span className="quick-view__brand">
-                    <i className="fas fa-award"></i>
-                    {product.brand}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <h1 className="quick-view__title">{product.title}</h1>
-
-            {/* SKU & Material */}
-            <div className="quick-view__product-info">
-              {product.sku && (
-                <span className="quick-view__sku">
-                  <i className="fas fa-barcode"></i>
-                  SKU: {product.sku}
+            <div className="quick-view__meta">
+              {product.category && (
+                <span className="quick-view__category">
+                  <i className="fas fa-tag"></i>
+                  {product.category}
                 </span>
               )}
-              {product.material && (
-                <span className="quick-view__material">
-                  <i className="fas fa-certificate"></i>
-                  Material: {product.material}
+              {product.brand && (
+                <span className="quick-view__brand">
+                  <i className="fas fa-award"></i>
+                  {product.brand}
                 </span>
               )}
             </div>
+              
+            {/* Title */}
+            <h1 className="quick-view__title">{product.title}</h1>
+
+            {/* Description - MOVED BELOW TITLE */}
+            {product.description && (
+              <div className="quick-view__description">
+                <p>{product.description}</p>
+              </div>
+            )}
 
             {/* Rating */}
             <div className="quick-view__rating">
@@ -433,23 +473,57 @@ const QuickView = () => {
 
             {/* Price Section */}
             <div className="quick-view__price-section">
+              {/* Regular Price */}
               <div className="quick-view__price-row">
-                <span className="quick-view__price-label">Price per item:</span>
+                <span className="quick-view__price-label">Price:</span>
                 <div className="quick-view__price-values">
-                  <span className="quick-view__price">₹{product.price.toLocaleString()}</span>
+                  {/* Final Price (after all discounts) */}
+                  <span className="quick-view__final-price">
+                    ₹{finalPrice.toLocaleString()}
+                  </span>
+
+                  {/* Original Price */}
                   {hasDiscount && (
                     <span className="quick-view__original-price">
                       ₹{product.originalPrice.toLocaleString()}
                     </span>
                   )}
+
+                  {/* Regular Price (if no original price) */}
+                  {!hasDiscount && product.price !== finalPrice && (
+                    <span className="quick-view__regular-price">
+                      ₹{product.price.toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
 
+              {/* Offer Details */}
+              {hasActiveOffer && offerValid && (
+                <div className="quick-view__offer-details">
+                  <div className="quick-view__offer-badge">
+                    <i className="fas fa-gift"></i>
+                    {product.offer.title}
+                  </div>
+                  <div className="quick-view__offer-description">
+                    {product.offer.description}
+                  </div>
+                  {product.offer.validUntil && (
+                    <div className="quick-view__offer-validity">
+                      Valid until: {new Date(product.offer.validUntil).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Total for Multiple Items */}
               {quantity > 1 && (
                 <div className="quick-view__total-price-row">
                   <span className="quick-view__total-label">Total ({quantity} items):</span>
                   <div className="quick-view__total-values">
-                    <span className="quick-view__total-price">₹{calculateTotalPrice().toLocaleString()}</span>
+                    <span className="quick-view__total-price">
+                      ₹{calculateTotalPrice().toLocaleString()}
+                    </span>
                     {hasDiscount && (
                       <span className="quick-view__total-original-price">
                         ₹{calculateOriginalTotalPrice().toLocaleString()}
@@ -459,20 +533,16 @@ const QuickView = () => {
                 </div>
               )}
 
-              {hasDiscount && (
-                <span className="quick-view__savings">
-                  You Save ₹{calculateTotalSavings().toLocaleString()} ({discountPercentage}% OFF)
-                </span>
+              {/* Savings Summary */}
+              {(hasDiscount || hasActiveOffer) && (
+                <div className="quick-view__savings">
+                  <i className="fas fa-piggy-bank"></i>
+                  You Save ₹{calculateTotalSavings().toLocaleString()} 
+                  {hasDiscount && ` (${discountPercentage}% OFF)`}
+                  {hasActiveOffer && offerValid && ` + Offer`}
+                </div>
               )}
             </div>
-
-            {/* Description */}
-            {product.description && (
-              <div className="quick-view__description">
-                <h3 className="quick-view__section-title">Description</h3>
-                <p>{product.description}</p>
-              </div>
-            )}
 
             {/* Selected Info Display */}
             <div className="quick-view__selected-info">
@@ -530,7 +600,10 @@ const QuickView = () => {
                     >
                       <span 
                         className="quick-view__color-preview"
-                        style={{ backgroundColor: color.toLowerCase() }}
+                        style={{ 
+                          backgroundColor: color.toLowerCase(),
+                          border: color.toLowerCase() === 'white' ? '1px solid #ddd' : 'none'
+                        }}
                       />
                       <span className="quick-view__color-name">{color}</span>
                     </button>
@@ -568,31 +641,146 @@ const QuickView = () => {
               </div>
             </div>
 
-            {/* Tags */}
-            {product.tags && product.tags.length > 0 && (
-              <div className="quick-view__tags-section">
-                <h3 className="quick-view__section-title">Tags</h3>
-                <div className="quick-view__tags">
-                  {product.tags.map((tag, index) => (
-                    <span key={index} className="quick-view__tag">#{tag}</span>
-                  ))}
+            {/* Product Details Tabs */}
+            <div className="quick-view__tabs">
+              <div className="quick-view__tab-headers">
+                <button 
+                  className={`quick-view__tab-header ${activeTab === 'details' ? 'quick-view__tab-header--active' : ''}`}
+                  onClick={() => setActiveTab('details')}
+                >
+                  <i className="fas fa-info-circle"></i>
+                  Details
+                </button>
+                {hasActiveOffer && (
+                  <button 
+                    className={`quick-view__tab-header ${activeTab === 'offer' ? 'quick-view__tab-header--active' : ''}`}
+                    onClick={() => setActiveTab('offer')}
+                  >
+                    <i className="fas fa-gift"></i>
+                    Offer
+                  </button>
+                )}
+              </div>
+                
+              <div className="quick-view__tab-content">
+
+                {activeTab === 'details' && (
+                  <div className="quick-view__tab-panel">
+                    <h4>Product Details</h4>
+                    <div className="quick-view__details-grid">
+                      {product.brand && (
+                        <div className="quick-view__detail-item">
+                          <strong>Brand:</strong>
+                          <span>{product.brand}</span>
+                        </div>
+                      )}
+                      {product.material && (
+                        <div className="quick-view__detail-item">
+                          <strong>Material:</strong>
+                          <span>{product.material}</span>
+                        </div>
+                      )}
+                      {product.sku && (
+                        <div className="quick-view__detail-item">
+                          <strong>SKU:</strong>
+                          <span>{product.sku}</span>
+                        </div>
+                      )}
+                      {product.category && (
+                        <div className="quick-view__detail-item">
+                          <strong>Category:</strong>
+                          <span>{product.category}</span>
+                        </div>
+                      )}
+                      {product.stock !== undefined && (
+                        <div className="quick-view__detail-item">
+                          <strong>Stock:</strong>
+                          <span className={`quick-view__stock-status ${product.stock === 0 ? 'quick-view__stock-status--out' : product.stock < 10 ? 'quick-view__stock-status--low' : ''}`}>
+                            {product.stock} units
+                          </span>
+                        </div>
+                        
+                      )}
+                      {/* Tags */}
+                      {product.tags && product.tags.length > 0 && (
+                        <div className="quick-view__tags-section">
+                          <h3 className="quick-view__section-title">Product Tags</h3>
+                          <div className="quick-view__tags">
+                            {product.tags.map((tag, index) => (
+                              <span key={index} className="quick-view__tag">#{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'offer' && hasActiveOffer && (
+                  <div className="quick-view__tab-panel">
+                    <h4>Special Offer</h4>
+                    <div className="quick-view__offer-details-full">
+                      <div className="quick-view__offer-header">
+                        <h5>{product.offer.title}</h5>
+                        {product.offer.type === 'percentage' ? (
+                          <span className="quick-view__offer-value">
+                            {product.offer.value}% OFF
+                          </span>
+                        ) : (
+                          <span className="quick-view__offer-value">
+                            ₹{product.offer.value} OFF
+                          </span>
+                        )}
+                      </div>
+                      {product.offer.description && (
+                        <p className="quick-view__offer-description-full">
+                          {product.offer.description}
+                        </p>
+                      )}
+                      {product.offer.validUntil && (
+                        <div className="quick-view__offer-validity-full">
+                          <i className="fas fa-clock"></i>
+                          <strong>Valid until:</strong> {new Date(product.offer.validUntil).toLocaleDateString()}
+                          {!offerValid && <span className="quick-view__offer-expired"> (Expired)</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+
+
+            {/* Product Features */}
+            <div className="quick-view__features">
+              <div className="quick-view__feature-item">
+                <i className="fas fa-truck"></i>
+                <div>
+                  <strong>Free Delivery</strong>
+                  <span>On orders above ₹1000</span>
                 </div>
               </div>
-            )}
-
-            {/* Product Info */}
-            <div className="quick-view__info">
-              <div className="quick-view__info-item">
-                <i className="fas fa-truck"></i>
-                <span>Free delivery on orders above ₹1000</span>
-              </div>
-              <div className="quick-view__info-item">
+              <div className="quick-view__feature-item">
                 <i className="fas fa-undo"></i>
-                <span>7 days return policy</span>
+                <div>
+                  <strong>Easy Returns</strong>
+                  <span>7 days return policy</span>
+                </div>
               </div>
-              <div className="quick-view__info-item">
+              <div className="quick-view__feature-item">
                 <i className="fas fa-shield-alt"></i>
-                <span>100% genuine products</span>
+                <div>
+                  <strong>Quality Guarantee</strong>
+                  <span>100% genuine products</span>
+                </div>
+              </div>
+              <div className="quick-view__feature-item">
+                <i className="fas fa-headset"></i>
+                <div>
+                  <strong>24/7 Support</strong>
+                  <span>Customer care available</span>
+                </div>
               </div>
             </div>
 
@@ -614,6 +802,25 @@ const QuickView = () => {
                 <i className="fas fa-bolt"></i>
                 {product.stock === 0 ? 'Unavailable' : 'Buy Now'}
               </button>
+            </div>
+
+            {/* Social Share */}
+            <div className="quick-view__social-share">
+              <span>Share this product:</span>
+              <div className="quick-view__social-buttons">
+                <button className="quick-view__social-btn quick-view__social-btn--facebook">
+                  <i className="fab fa-facebook-f"></i>
+                </button>
+                <button className="quick-view__social-btn quick-view__social-btn--twitter">
+                  <i className="fab fa-twitter"></i>
+                </button>
+                <button className="quick-view__social-btn quick-view__social-btn--pinterest">
+                  <i className="fab fa-pinterest-p"></i>
+                </button>
+                <button className="quick-view__social-btn quick-view__social-btn--whatsapp">
+                  <i className="fab fa-whatsapp"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>

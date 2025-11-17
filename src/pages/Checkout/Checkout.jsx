@@ -1,23 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { auth, db } from '../../firebase/config';
+import { auth, db } from '../../firebase/config.js'; // FIX: Corrected path
 import { 
   doc, 
   getDoc, 
   setDoc, 
-  onSnapshot 
-} from 'firebase/firestore';
+  onSnapshot,
+  collection,
+  addDoc 
+} from 'firebase/firestore'; 
 import { onAuthStateChanged } from 'firebase/auth';
-import { useCart } from '../../components/context/CartContext';
+import { useCart } from '../../components/context/CartContext.jsx'; // FIX: Corrected path
 import './Checkout.scss';
 
+
+// === SIMPLIFIED PRICING LOGIC FUNCTIONS ===
+
+/**
+ * Checks if a product has a regular discount (originalPrice > price).
+ * @param {object} product - The product object.
+ * @returns {boolean}
+ */
+const hasDiscount = (product) => {
+  return product?.originalPrice && product.originalPrice > product.price;
+};
+
+/**
+ * Calculates the regular discount percentage.
+ * @param {object} product - The product object.
+ * @returns {number} - The discount percentage.
+ */
+const calculateDiscountPercentage = (product) => {
+  if (!hasDiscount(product)) return 0;
+  if (product.discount) return product.discount;
+  return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+};
+
+/**
+ * Calculates the total price for a product, including quantity.
+ * @param {object} product - The product object.
+ * @param {number} quantity - The number of items.
+ * @returns {number} - The total price.
+ */
+const calculateTotalPrice = (product, quantity = 1) => {
+  return product.price * (quantity || 1);
+};
+
+// === END OF PRICING LOGIC ===
 
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems, clearCart, updateQuantity, removeFromCart } = useCart();
   
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); 
   const [checkoutItems, setCheckoutItems] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -25,7 +61,21 @@ const Checkout = () => {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false); 
   const [showSizeChart, setShowSizeChart] = useState(false);
+  
+  // === NEW: State for payment method ===
+  const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'cod'
+
+  // === SIMPLIFIED PRICING STATE ===
+  const [subtotal, setSubtotal] = useState(0); // Full price (MSRP)
+  const [totalDiscount, setTotalDiscount] = useState(0); // Regular discounts
+  const [shipping, setShipping] = useState(50);
+  
+  // === NEW: States for COD fees ===
+  const [codCharge, setCodCharge] = useState(0);
+  const [securityDeposit, setSecurityDeposit] = useState(0);
+  const [total, setTotal] = useState(0); // Final price
   
   // Address form state
   const [addressForm, setAddressForm] = useState({
@@ -40,10 +90,8 @@ const Checkout = () => {
     isDefault: false
   });
 
-
   // Available sizes
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-
 
   // Authentication check
   useEffect(() => {
@@ -57,12 +105,11 @@ const Checkout = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-
   // Load saved addresses from Firestore
   useEffect(() => {
     if (!user) return;
 
-
+    setLoading(true);
     const addressesRef = doc(db, 'addresses', user.uid);
     const unsubscribe = onSnapshot(addressesRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -70,8 +117,6 @@ const Checkout = () => {
         const addressesArray = data.addresses || [];
         setSavedAddresses(addressesArray);
 
-
-        // Automatically select default address if none selected
         if (!selectedAddress) {
           const defaultAddr = addressesArray.find(addr => addr.isDefault);
           if (defaultAddr) setSelectedAddress(defaultAddr);
@@ -85,31 +130,65 @@ const Checkout = () => {
       setLoading(false);
     });
 
-
     return () => unsubscribe();
   }, [user, selectedAddress]);
-
 
   // Set checkout items from Buy Now product or cart items 
   useEffect(() => {
     if (location.state?.product) {
       const product = {
         ...location.state.product,
-        quantity: 1,
-        size: location.state.product.size || 'M',
-        color: location.state.product.color || 'Default'
+        quantity: location.state.product.quantity || 1,
+        size: location.state.product.size || (location.state.product.sizes?.[0] || 'M'),
+        color: location.state.product.color || (location.state.product.colors?.[0] || 'Default')
       };
       setCheckoutItems([product]);
     } else {
       const itemsWithDefaults = cartItems.map(item => ({
         ...item,
-        size: item.size || 'M',
-        color: item.color || 'Default'
+        size: item.size || (item.sizes?.[0] || 'M'),
+        color: item.color || (item.colors?.[0] || 'Default')
       }));
       setCheckoutItems(itemsWithDefaults);
     }
   }, [location.state, cartItems]);
 
+  // === UPDATED: Calculate totals (with payment logic) ===
+  useEffect(() => {
+    let newSubtotal = 0; // Based on originalPrice or price
+    let newTotalDiscount = 0; // Regular price vs originalPrice
+
+    checkoutItems.forEach(item => {
+      const basePrice = item.originalPrice || item.price;
+      newSubtotal += basePrice * (item.quantity || 1);
+      
+      if (hasDiscount(item)) {
+        newTotalDiscount += (item.originalPrice - item.price) * (item.quantity || 1);
+      }
+    });
+
+    const priceAfterDiscounts = newSubtotal - newTotalDiscount;
+    // FIX: Calculate shipping based on price *after* discounts
+    const calculatedShipping = priceAfterDiscounts > 1000 ? 0 : 50;
+    
+    let newTotal = priceAfterDiscounts + calculatedShipping;
+    let newCodCharge = 0;
+    let newSecurityDeposit = 0;
+
+    if (paymentMethod === 'cod') {
+      newCodCharge = 9;
+      newSecurityDeposit = 50;
+      newTotal = newTotal + newCodCharge; // Security deposit is paid online, not added to total due
+    }
+
+    setSubtotal(newSubtotal);
+    setTotalDiscount(newTotalDiscount);
+    setShipping(calculatedShipping);
+    setCodCharge(newCodCharge);
+    setSecurityDeposit(newSecurityDeposit);
+    setTotal(newTotal > 0 ? newTotal : 0);
+
+  }, [checkoutItems, paymentMethod]); // Recalculate when items or payment method change
 
   // Handle quantity updating per item
   const handleQuantityChange = (itemId, newQuantity) => {
@@ -125,7 +204,6 @@ const Checkout = () => {
     }
   };
 
-
   // Handle size selection per item
   const handleSizeChange = (itemId, size) => {
     setCheckoutItems(prev => 
@@ -135,30 +213,18 @@ const Checkout = () => {
     );
   };
 
-
   // Handle removing a product from checkout (cart)
   const handleRemoveItem = (itemId) => {
     if (location.state?.product) {
-      alert('Cannot remove item from Buy Now checkout');
+      if (window.confirm('Cancel "Buy Now"? You will be returned to the previous page.')) {
+        navigate(-1);
+      }
       return;
     }
     if (window.confirm('Remove this item from checkout?')) {
       removeFromCart(itemId);
     }
   };
-
-
-  // Calculate subtotal
-  const calculateTotal = () => {
-    return checkoutItems.reduce((total, item) => total + (item.price * (item.quantity || 1)), 0);
-  };
-
-
-  const subtotal = calculateTotal();
-  const shipping = subtotal > 1000 ? 0 : 50;
-  const tax = subtotal * 0.18;
-  const total = subtotal + shipping + tax;
-
 
   // Manage form input for address
   const handleAddressChange = (e) => {
@@ -168,7 +234,6 @@ const Checkout = () => {
       [name]: type === 'checkbox' ? checked : value 
     }));
   };
-
 
   // Save or update address in Firestore
   const handleSaveAddress = async () => {
@@ -183,13 +248,11 @@ const Checkout = () => {
       return;
     }
 
-
     setSaving(true);
     try {
       const addressesRef = doc(db, 'addresses', user.uid);
       const addressDoc = await getDoc(addressesRef);
       let updatedAddresses = [];
-
 
       if (editingAddress) {
         if (addressDoc.exists()) {
@@ -223,8 +286,12 @@ const Checkout = () => {
         }
       }
 
+      await setDoc(addressesRef, { 
+        userId: user.uid, 
+        addresses: updatedAddresses, 
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
 
-      await setDoc(addressesRef, { userId: user.uid, addresses: updatedAddresses, updatedAt: new Date().toISOString() });
       setShowAddressForm(false);
       setEditingAddress(null);
       setAddressForm({ name:'', mobile:'', pincode:'', address:'', locality:'', city:'', state:'', addressType:'home', isDefault:false });
@@ -236,13 +303,11 @@ const Checkout = () => {
     }
   };
 
-
   const handleEditAddress = (address) => {
     setAddressForm(address);
     setEditingAddress(address);
     setShowAddressForm(true);
   };
-
 
   const handleDeleteAddress = async (addressId) => {
     if (!window.confirm('Are you sure you want to delete this address?')) return;
@@ -255,15 +320,21 @@ const Checkout = () => {
         if (existingAddresses.find(addr => addr.id === addressId)?.isDefault && updatedAddresses.length > 0){
           updatedAddresses[0].isDefault = true;
         }
-        await setDoc(addressesRef, { userId: user.uid, addresses: updatedAddresses, updatedAt: new Date().toISOString() });
-        if (selectedAddress?.id === addressId) setSelectedAddress(updatedAddresses.find(addr => addr.isDefault) || updatedAddresses[0] || null);
+        await setDoc(addressesRef, { 
+          userId: user.uid, 
+          addresses: updatedAddresses, 
+          updatedAt: new Date().toISOString() 
+        }, { merge: true });
+        
+        if (selectedAddress?.id === addressId) {
+          setSelectedAddress(updatedAddresses.find(addr => addr.isDefault) || updatedAddresses[0] || null);
+        }
       }
     } catch (error){
       console.error('Error deleting address:', error);
       alert('Failed to delete address');
     }
   };
-
 
   const handleSetDefaultAddress = async (addressId) => {
     try {
@@ -272,7 +343,13 @@ const Checkout = () => {
       if (addressDoc.exists()) {
         const existingAddresses = addressDoc.data().addresses || [];
         const updatedAddresses = existingAddresses.map(addr => ({ ...addr, isDefault: addr.id === addressId }));
-        await setDoc(addressesRef, { userId: user.uid, addresses: updatedAddresses, updatedAt: new Date().toISOString() });
+        
+        await setDoc(addressesRef, { 
+          userId: user.uid, 
+          addresses: updatedAddresses, 
+          updatedAt: new Date().toISOString() 
+        }, { merge: true });
+        
         const newDefault = updatedAddresses.find(addr => addr.id === addressId);
         setSelectedAddress(newDefault);
       }
@@ -283,7 +360,8 @@ const Checkout = () => {
   };
 
 
-  const handlePlaceOrder = async () => {
+  // === UPDATED: Renamed to "Proceed to Payment" ===
+  const handleProceedToPayment = () => {
     if (!selectedAddress) {
       alert('Please select a delivery address');
       return;
@@ -293,39 +371,59 @@ const Checkout = () => {
       navigate('/login');
       return;
     }
-    try {
-      const orderData = {
-        userId: user.uid,
-        items: checkoutItems.map(item => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          quantity: item.quantity || 1,
-          image: item.image,
-          size: item.size,
-          color: item.color
-        })),
-        deliveryAddress: selectedAddress,
-        subtotal,
-        shipping,
-        tax,
-        total,
-        status: 'pending',
-        paymentStatus: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      await setDoc(doc(db, 'orders', `order_${Date.now()}`), orderData);
-      if (!location.state?.product) clearCart();
-      alert('Order placed successfully!');
-      navigate('/profile?tab=orders');
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
-    }
+
+    setPlacingOrder(true); // Show spinner on button
+
+    // Determine amount to pay online
+    const amountToPayOnline = paymentMethod === 'cod' ? securityDeposit : total;
+    
+    // This is the object that will be saved to Firestore *after* payment
+    const orderData = {
+      userId: user.uid,
+      items: checkoutItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price, // Use the regular price
+        originalPrice: item.originalPrice || item.price,
+        quantity: item.quantity || 1,
+        image: item.image,
+        size: item.size,
+        color: item.color,
+      })),
+      deliveryAddress: selectedAddress,
+      
+      // Save pricing details
+      subtotal: subtotal,
+      shipping: shipping,
+      discount: totalDiscount,
+      codCharge: codCharge,
+      securityDepositPaid: paymentMethod === 'cod' ? securityDeposit : 0,
+      total: total,
+      
+      paymentMethod: paymentMethod,
+      // Amount to be paid on delivery
+      amountDue: paymentMethod === 'cod' ? total - securityDeposit : 0,
+      // Amount paid online
+      amountPaid: amountToPayOnline,
+      
+      status: 'pending',
+      paymentStatus: 'pending', // This will be updated by the payment page
+      createdAt: new Date().toISOString()
+    };
+
+    // Navigate to the new payment page, passing all data
+    navigate('/payment', { 
+      state: { 
+        orderData: orderData,
+        amountToPay: amountToPayOnline,
+        isCod: paymentMethod === 'cod',
+        isBuyNow: !!location.state?.product // Flag to clear cart or not
+      } 
+    });
   };
 
 
-  if (loading) {
+  if (loading || !user) { // Wait for user to be loaded
     return (
       <div className="checkout">
         <div className="container">
@@ -353,7 +451,6 @@ const Checkout = () => {
     );
   }
 
-
   return (
     <div className="checkout">
       <div className="container">
@@ -363,7 +460,6 @@ const Checkout = () => {
             <i className="fas fa-arrow-left"></i> Back
           </button>
         </div>
-
 
         <div className="checkout__content">
           {/* Left Section */}
@@ -393,7 +489,6 @@ const Checkout = () => {
                   <i className="fas fa-plus"></i> Add New Address
                 </button>
               </div>
-
 
               {showAddressForm && (
                 <div className="address-form">
@@ -568,7 +663,6 @@ const Checkout = () => {
                 </div>
               )}
 
-
               {savedAddresses.length === 0 && !showAddressForm ? (
                 <div className="empty-state">
                   <i className="fas fa-map-marker-alt"></i>
@@ -640,6 +734,64 @@ const Checkout = () => {
               )}
             </div>
 
+            {/* === NEW: Payment Method Section === */}
+            <div className="checkout__section">
+              <div className="checkout__section-header">
+                <h2><i className="fas fa-credit-card"></i> Payment Method</h2>
+              </div>
+              <div className="payment-options">
+                {/* Pay Online Option */}
+                <div 
+                  className={`payment-option ${paymentMethod === 'online' ? 'payment-option--selected' : ''}`}
+                  onClick={() => setPaymentMethod('online')}
+                >
+                  <div className="payment-option__header">
+                    <input 
+                      type="radio" 
+                      name="paymentMethod"
+                      value="online"
+                      checked={paymentMethod === 'online'} 
+                      onChange={() => setPaymentMethod('online')}
+                    />
+                    <label htmlFor="online">
+                      <i className="fas fa-shield-alt"></i>
+                      Pay Online
+                    </label>
+                    <div className="payment-option__icons">
+                      <img src="https://placehold.co/40x25/3498db/fff?text=R" alt="Razorpay" />
+                      <img src="https://placehold.co/40x25/2c3e50/fff?text=P" alt="Paytm" />
+                    </div>
+                  </div>
+                  <p className="payment-option__description">
+                    Pay with UPI, Credit/Debit Card, Net Banking.
+                  </p>
+                </div>
+                
+                {/* Cash on Delivery Option */}
+                <div 
+                  className={`payment-option ${paymentMethod === 'cod' ? 'payment-option--selected' : ''}`}
+                  onClick={() => setPaymentMethod('cod')}
+                >
+                  <div className="payment-option__header">
+                    <input 
+                      type="radio" 
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === 'cod'} 
+                      onChange={() => setPaymentMethod('cod')}
+                    />
+                    <label htmlFor="cod">
+                      <i className="fas fa-hand-holding-usd"></i>
+                      Cash on Delivery (COD)
+                    </label>
+                  </div>
+                  <p className="payment-option__description">
+                    Pay a <strong>₹50</strong> security deposit online. The rest is payable on delivery.
+                    A <strong>₹9</strong> COD fee applies.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Products Section */}
             <div className="checkout__section">
@@ -651,7 +803,6 @@ const Checkout = () => {
                   <i className="fas fa-ruler"></i> Size Chart
                 </button>
               </div>
-
 
               {showSizeChart && (
                 <div className="size-chart-modal">
@@ -687,7 +838,6 @@ const Checkout = () => {
                 </div>
               )}
 
-
               <div className="checkout-products">
                 {checkoutItems.map((item, index) => (
                   <div 
@@ -706,30 +856,29 @@ const Checkout = () => {
                     <div className="checkout-product__details">
                       <div className="checkout-product__header">
                         <h3>{item.title}</h3>
-                        {!location.state?.product && (
-                          <button 
-                            className="checkout-product__remove" 
-                            onClick={e => { 
-                              e.stopPropagation(); 
-                              handleRemoveItem(item.id); 
-                            }} 
-                            title="Remove item"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        )}
+                        <button 
+                          className="checkout-product__remove" 
+                          onClick={e => { 
+                            e.stopPropagation(); 
+                            handleRemoveItem(item.id); 
+                          }} 
+                          title="Remove item"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
                       </div>
+                      
+                      {/* Simplified Price Display */}
                       <div className="checkout-product__price">
                         <span className="price-current">₹{item.price.toLocaleString()}</span>
-                        {item.originalPrice && (
+                        {hasDiscount(item) && (
                           <>
                             <span className="price-original">₹{item.originalPrice.toLocaleString()}</span>
-                            {item.discount && (
-                              <span className="price-discount">{item.discount}% OFF</span>
-                            )}
+                            <span className="price-discount">{calculateDiscountPercentage(item)}% OFF</span>
                           </>
                         )}
                       </div>
+
                       <div className="checkout-product__options">
                         <div className="checkout-product__option">
                           <label>Size:</label>
@@ -785,9 +934,10 @@ const Checkout = () => {
                         </div>
                       </div>
                     </div>
+                    
                     <div className="checkout-product__total">
                       <span className="total-label">Item Total</span>
-                      <span className="total-value">₹{(item.price * (item.quantity || 1)).toLocaleString()}</span>
+                      <span className="total-value">₹{calculateTotalPrice(item, item.quantity || 1).toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
@@ -795,41 +945,85 @@ const Checkout = () => {
             </div>
           </div>
 
-
           {/* Right Section */}
           <div className="checkout__sidebar">
+            {/* === UPDATED: Order Summary with COD logic === */}
             <div className="order-summary">
               <h2>Order Summary</h2>
               <div className="order-summary__row">
                 <span>Subtotal ({checkoutItems.reduce((sum, item) => sum + (item.quantity || 1), 0)} items)</span>
                 <span>₹{subtotal.toLocaleString()}</span>
               </div>
+              
+              {totalDiscount > 0 && (
+                <div className="order-summary__row order-summary__info--success">
+                  <i className="fas fa-tag"></i>
+                  <span>Product Discounts</span>
+                  <span>- ₹{totalDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              
               <div className="order-summary__row">
                 <span>Shipping</span>
                 <span>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span>
               </div>
+              
               {shipping === 0 && (
                 <div className="order-summary__info order-summary__info--success">
                   <i className="fas fa-check-circle"></i>
                   You've got free shipping!
                 </div>
               )}
-              <div className="order-summary__row">
-                <span>Tax (18% GST)</span>
-                <span>₹{tax.toFixed(2)}</span>
-              </div>
+
+              {/* Show COD Charge if selected */}
+              {paymentMethod === 'cod' && (
+                <div className="order-summary__row order-summary__row--cod-fee">
+                  <span>COD Handling Fee</span>
+                  <span>+ ₹{codCharge.toLocaleString()}</span>
+                </div>
+              )}
+              
               <div className="order-summary__divider"></div>
+              
               <div className="order-summary__row order-summary__row--total">
-                <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>Total Amount</span>
+                <span>₹{total.toLocaleString()}</span>
               </div>
+
+              {/* Show payment breakdown */}
+              {paymentMethod === 'online' ? (
+                <div className="order-summary__row order-summary__info--offer">
+                  <span>Amount to Pay Online</span>
+                  <span>₹{total.toLocaleString()}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="order-summary__row order-summary__info--offer">
+                    <span>Security Deposit (Pay Online)</span>
+                    <span>- ₹{securityDeposit.toLocaleString()}</span>
+                  </div>
+                  <div className="order-summary__row order-summary__row--total">
+                    <span>Amount Payable on Delivery</span>
+                    <span>₹{(total - securityDeposit).toLocaleString()}</span>
+                  </div>
+                </>
+              )}
+              
               <button 
                 className="order-summary__place-order" 
-                onClick={handlePlaceOrder} 
-                disabled={!selectedAddress}
+                onClick={handleProceedToPayment} 
+                disabled={!selectedAddress || placingOrder}
               >
-                <i className="fas fa-lock"></i> Place Order
+                {placingOrder ? (
+                  <i className="fas fa-spinner fa-spin"></i>
+                ) : (
+                  <>
+                    <i className="fas fa-lock"></i>
+                    {paymentMethod === 'cod' ? `Pay ₹${securityDeposit} Security Deposit` : `Proceed to Pay ₹${total.toLocaleString()}`}
+                  </>
+                )}
               </button>
+              
               {!selectedAddress && (
                 <p className="order-summary__warning">
                   Please select a delivery address
@@ -846,6 +1040,5 @@ const Checkout = () => {
     </div>
   );
 };
-
 
 export default Checkout;

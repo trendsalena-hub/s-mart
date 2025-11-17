@@ -1,0 +1,561 @@
+// Color Variables - Light Gold & White Theme
+$primary-color: #d4af37;
+$primary-light: #e6c55a;
+$primary-extra-light: #f7f2e4;
+$primary-dark: #b8941f;
+$white: #ffffff;
+$background: #fefefe;
+$text-primary: #2c3e50;
+$text-secondary: #7f8c8d;
+$border-color: #ecf0f1;
+$success-color: #27ae60;
+$error-color: #e74c3c;
+$warning-color: #f39c12;
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+$shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// Mobile Overlay Sidebar
+.profile-mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+}
+
+.profile-mobile-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  background: $white;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  animation: slideInLeft 0.3s ease;
+  overflow: hidden;
+
+  &__header {
+    padding: 1.5rem 1.25rem;
+    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: $white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+  }
+
+  &__close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: $white;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+  }
+
+  &__nav {
+    flex: 1;
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    position: relative;
+    color: $text-primary;
+    font-size: 0.95rem;
+    font-weight: 500;
+
+    &:hover {
+      background: $primary-extra-light;
+    }
+
+    &--active {
+      background: linear-gradient(90deg, rgba($primary-color, 0.1), transparent);
+      border-right: 3px solid $primary-color;
+      color: $primary-color;
+
+      .profile-mobile-sidebar__icon {
+        background: $primary-color;
+        color: $white;
+      }
+    }
+
+    &--admin {
+      background: linear-gradient(135deg, rgba($primary-color, 0.08), rgba($primary-light, 0.06));
+      border-top: 1px solid $border-color;
+      margin-top: 0.5rem;
+      padding-top: 1.125rem;
+      position: relative;
+
+      &::before {
+        content: 'Admin';
+        position: absolute;
+        top: 0.25rem;
+        right: 1.25rem;
+        background: $primary-color;
+        color: $white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+    }
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    background: $primary-extra-light;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $primary-color;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  &__badge {
+    min-width: 22px;
+    height: 22px;
+    background: $primary-color;
+    color: $white;
+    border-radius: 11px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid $white;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+// Bottom Navigation
+.profile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $white;
+  border-top: 1px solid $border-color;
+  display: flex;
+  padding: 0.5rem;
+  z-index: 999;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+
+  &__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    position: relative;
+    color: $text-secondary;
+    font-size: 0.75rem;
+    font-weight: 500;
+
+    &:hover {
+      background: $primary-extra-light;
+      color: $primary-color;
+    }
+
+    &--active {
+      color: $primary-color;
+
+      .profile-bottom-nav__icon {
+        background: $primary-color;
+        color: $white;
+        transform: translateY(-2px);
+      }
+
+      .profile-bottom-nav__label {
+        font-weight: 600;
+      }
+    }
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    background: $primary-extra-light;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $primary-color;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  &__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    background: $primary-color;
+    color: $white;
+    border-radius: 9px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid $white;
+    z-index: 2;
+  }
+}
+
+// Animations
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+// Enhanced Mobile Responsiveness
+@media (max-width: 480px) {
+  .profile-mobile-sidebar {
+    width: 280px;
+
+    &__header {
+      padding: 1.25rem 1rem;
+      
+      h3 {
+        font-size: 1.2rem;
+      }
+    }
+
+    &__item {
+      padding: 0.875rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    &__icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+  }
+
+  .profile-bottom-nav {
+    padding: 0.4rem;
+
+    &__item {
+      padding: 0.6rem 0.4rem;
+      font-size: 0.7rem;
+    }
+
+    &__icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.1rem;
+    }
+
+    &__label {
+      font-size: 0.65rem;
+    }
+
+    &__badge {
+      min-width: 16px;
+      height: 16px;
+      font-size: 0.6rem;
+      top: 6px;
+      right: 6px;
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-mobile-sidebar {
+    width: 260px;
+
+    &__header {
+      padding: 1rem 0.875rem;
+    }
+
+    &__item {
+      padding: 0.75rem 0.875rem;
+      font-size: 0.85rem;
+    }
+
+    &__icon {
+      width: 36px;
+      height: 36px;
+      font-size: 0.9rem;
+    }
+  }
+
+  .profile-bottom-nav {
+    padding: 0.3rem;
+
+    &__item {
+      padding: 0.5rem 0.3rem;
+    }
+
+    &__icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
+    }
+
+    &__label {
+      font-size: 0.6rem;
+    }
+  }
+}
+
+// Landscape Mode Adjustments
+@media (max-height: 500px) and (orientation: landscape) {
+  .profile-mobile-sidebar {
+    &__nav {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    &__item {
+      padding: 0.75rem 1.25rem;
+    }
+  }
+
+  .profile-bottom-nav {
+    padding: 0.3rem;
+
+    &__item {
+      padding: 0.5rem 0.3rem;
+    }
+
+    &__icon {
+      width: 36px;
+      height: 36px;
+    }
+  }
+}
+
+// Reduced Motion Support
+@media (prefers-reduced-motion: reduce) {
+  .profile-mobile-overlay,
+  .profile-mobile-sidebar,
+  .profile-bottom-nav__item,
+  .profile-mobile-sidebar__item,
+  .profile-mobile-sidebar__close,
+  .profile-bottom-nav__icon {
+    animation: none;
+    transition: none;
+  }
+}
+
+// High Contrast Mode
+@media (prefers-contrast: high) {
+  .profile-mobile-sidebar {
+    border: 2px solid $text-primary;
+
+    &__header {
+      border-bottom: 2px solid $text-primary;
+    }
+  }
+
+  .profile-bottom-nav {
+    border-top: 2px solid $text-primary;
+  }
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+  .profile-mobile-sidebar {
+    background: #2d3748;
+    color: #e2e8f0;
+
+    &__header {
+      background: linear-gradient(135deg, $primary-dark, $primary-color);
+      color: #1a202c;
+    }
+
+    &__item {
+      color: #e2e8f0;
+
+      &:hover {
+        background: #4a5568;
+      }
+
+      &--active {
+        background: linear-gradient(90deg, rgba($primary-color, 0.2), transparent);
+        color: $primary-light;
+      }
+
+      &--admin {
+        background: linear-gradient(135deg, rgba($primary-color, 0.15), rgba($primary-light, 0.1));
+      }
+    }
+
+    &__icon {
+      background: #4a5568;
+      color: $primary-light;
+    }
+  }
+
+  .profile-bottom-nav {
+    background: #2d3748;
+    border-top-color: #4a5568;
+
+    &__item {
+      color: #a0aec0;
+
+      &:hover {
+        background: #4a5568;
+        color: $primary-light;
+      }
+
+      &--active {
+        color: $primary-light;
+      }
+    }
+
+    &__icon {
+      background: #4a5568;
+      color: $primary-light;
+    }
+  }
+}
+
+// Focus States for Accessibility
+.profile-mobile-sidebar__item:focus-visible,
+.profile-bottom-nav__item:focus-visible,
+.profile-mobile-sidebar__close:focus-visible {
+  outline: 2px solid $primary-color;
+  outline-offset: 2px;
+}
+
+// Smooth Scrolling for Mobile
+.profile-mobile-sidebar__nav {
+  scroll-behavior: smooth;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $primary-extra-light;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $primary-light;
+    border-radius: 2px;
+  }
+}
+
+// Touch Device Optimizations
+@media (hover: none) and (pointer: coarse) {
+  .profile-mobile-sidebar__item,
+  .profile-bottom-nav__item {
+    &:hover {
+      background: transparent;
+    }
+    
+    &:active {
+      background: $primary-extra-light;
+    }
+  }
+  
+  .profile-bottom-nav__item--active {
+    .profile-bottom-nav__icon {
+      transform: none;
+    }
+  }
+}
