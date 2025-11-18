@@ -165,12 +165,6 @@ a.btn {
   justify-content: center;
   gap: 0.5rem;
 
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--gold-dark), #a37a3e);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(201, 168, 106, 0.3);
-  }
-
   &:active:not(:disabled) {
     transform: translateY(0);
   }

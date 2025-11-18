@@ -8,7 +8,8 @@ import AllProducts from './components/AllProducts/AllProducts.jsx';
 import BannerSettings from './components/BannerSettings/BannerSettings.jsx';
 import ContactMessages from './components/ContactMessages/ContactMessages.jsx';
 import UserOrders from './components/UserOrders/UserOrders.jsx';
-import ManageCoupons from './components/ManageCoupons/ManageCoupons.jsx'; // 1. Import new component
+import ManageCoupons from './components/ManageCoupons/ManageCoupons.jsx';
+import ManageBlog from './components/ManageBlog/ManageBlog.jsx'; // 1. Import new component
 import './AdminDashboard.scss';
 
 const AdminDashboard = () => {
@@ -26,9 +27,12 @@ const AdminDashboard = () => {
 
   const [contacts, setContacts] = useState([]);
   
-  // 2. Add state for Coupons
   const [coupons, setCoupons] = useState([]);
   const [couponsLoading, setCouponsLoading] = useState(true);
+
+  // 2. Add state for Blog Posts
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [blogLoading, setBlogLoading] = useState(true);
 
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -52,8 +56,8 @@ const AdminDashboard = () => {
               // Load all admin data
               await loadProducts();
               await loadOrders(); 
-              await loadCoupons(); // 3. Load coupons on mount
-              // await loadContacts();
+              await loadCoupons();
+              await loadBlogPosts(); // 3. Load blog posts on mount
             }
           } else {
             setError('User profile not found');
@@ -111,7 +115,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // 4. Add loadCoupons function
   const loadCoupons = async () => {
     setCouponsLoading(true);
     try {
@@ -128,6 +131,26 @@ const AdminDashboard = () => {
       setError('Failed to load coupons');
     } finally {
       setCouponsLoading(false);
+    }
+  };
+
+  // 4. Add loadBlogPosts function
+  const loadBlogPosts = async () => {
+    setBlogLoading(true);
+    try {
+      const postsRef = collection(db, 'blogPosts');
+      const q = query(postsRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const postsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBlogPosts(postsData);
+    } catch (err) {
+      console.error('Error loading blog posts:', err);
+      setError('Failed to load blog posts');
+    } finally {
+      setBlogLoading(false);
     }
   };
 
@@ -167,7 +190,16 @@ const AdminDashboard = () => {
   if (userRole !== 'admin') {
     return (
       <div className="admin-dashboard__error-page">
-        {/* ... (error page JSX) ... */}
+        <i className="fas fa-shield-alt"></i>
+        <h2>Access Denied</h2>
+        <p>{error || 'You do not have permission to access this page.'}</p>
+        <button 
+          onClick={() => navigate('/')}
+          className="admin-dashboard__error-btn"
+        >
+          <i className="fas fa-home"></i>
+          Return to Home
+        </button>
       </div>
     );
   }
@@ -177,18 +209,44 @@ const AdminDashboard = () => {
       <div className="admin-dashboard__container">
         {/* Header */}
         <div className="admin-dashboard__header">
-          {/* ... (header JSX) ... */}
+          <div className="admin-dashboard__header-content">
+            <button 
+              className="admin-dashboard__menu-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle menu"
+            >
+              <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
+            </button>
+            <div>
+              <h1>
+                <i className="fas fa-shield-alt"></i>
+                Admin Dashboard
+              </h1>
+              <p>Manage your store</p>
+            </div>
+          </div>
+          <button 
+            className="admin-dashboard__back-btn"
+            onClick={() => navigate('/')}
+          >
+            <i className="fas fa-home"></i>
+            <span>Back to Store</span>
+          </button>
         </div>
 
         {/* Messages */}
         {success && (
           <div className="admin-dashboard__message admin-dashboard__message--success">
-            {/* ... (success message JSX) ... */}
+            <i className="fas fa-check-circle"></i>
+            <span>{success}</span>
+            <button onClick={clearMessages} className="admin-dashboard__message-close">×</button>
           </div>
         )}
         {error && (
           <div className="admin-dashboard__message admin-dashboard__message--error">
-            {/* ... (error message JSX) ... */}
+            <i className="fas fa-exclamation-circle"></i>
+            <span>{error}</span>
+            <button onClick={clearMessages} className="admin-dashboard__message-close">×</button>
           </div>
         )}
 
@@ -227,7 +285,6 @@ const AdminDashboard = () => {
                 <span>Add Product</span>
               </button>
 
-              {/* 5. Add "Manage Coupons" to navigation */}
               <button
                 className={`admin-dashboard__nav-item ${activeTab === 'coupons' ? 'admin-dashboard__nav-item--active' : ''}`}
                 onClick={() => handleTabChange('coupons')}
@@ -235,6 +292,16 @@ const AdminDashboard = () => {
                 <i className="fas fa-tags"></i>
                 <span>Manage Coupons</span>
                 <span className="admin-dashboard__badge">{coupons.length}</span>
+              </button>
+
+              {/* 5. Add "Blog Posts" to navigation */}
+              <button
+                className={`admin-dashboard__nav-item ${activeTab === 'blog' ? 'admin-dashboard__nav-item--active' : ''}`}
+                onClick={() => handleTabChange('blog')}
+              >
+                <i className="fas fa-file-alt"></i>
+                <span>Blog Posts</span>
+                <span className="admin-dashboard__badge">{blogPosts.length}</span>
               </button>
 
               <button
@@ -302,12 +369,22 @@ const AdminDashboard = () => {
               />
             )}
             
-            {/* 6. Render new component */}
             {activeTab === 'coupons' && (
               <ManageCoupons
                 coupons={coupons}
                 loading={couponsLoading}
                 onRefresh={loadCoupons}
+                onSuccess={(message) => setSuccess(message)}
+                onError={(message) => setError(message)}
+              />
+            )}
+
+            {/* 6. Render new component */}
+            {activeTab === 'blog' && (
+              <ManageBlog
+                posts={blogPosts}
+                loading={blogLoading}
+                onRefresh={loadBlogPosts}
                 onSuccess={(message) => setSuccess(message)}
                 onError={(message) => setError(message)}
               />

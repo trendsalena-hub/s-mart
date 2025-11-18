@@ -1,3 +1,34 @@
+// Variables
+$primary-gold: #c9a86a;
+$primary-gold-dark: #b8935a;
+$text-dark: #333;
+$text-light: #666;
+$background-light: #f5f5f5;
+$border-light: #e0e0e0;
+$shadow-light: rgba(0, 0, 0, 0.1);
+$shadow-medium: rgba(0, 0, 0, 0.15);
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.4s ease;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@mixin smooth-transition {
+  transition: all $transition-normal;
+  will-change: transform, opacity;
+}
+
 .main-header {
   position: relative;
 }
@@ -9,14 +40,14 @@
   right: 0;
   z-index: 1000;
   background: white;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  @include smooth-transition;
 
   @media (max-width: 968px) {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px $shadow-light;
   }
 
   &--scrolled {
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 20px $shadow-medium;
   }
 
   &--hidden {
@@ -28,7 +59,7 @@
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   &__banner {
-    background: linear-gradient(135deg, #c9a86a, #b8935a);
+    background: linear-gradient(135deg, $primary-gold, $primary-gold-dark);
     color: white;
     padding: 10px 0;
     overflow: hidden;
@@ -41,15 +72,17 @@
 
   &__banner-content {
     display: flex;
-    animation: scroll 30s linear infinite;
+    animation: scrollBanner 40s linear infinite;
+    white-space: nowrap;
 
     span {
-      white-space: nowrap;
       font-size: 14px;
       font-weight: 600;
+      padding: 0 20px;
 
       @media (max-width: 768px) {
         font-size: 12px;
+        padding: 0 15px;
       }
     }
   }
@@ -60,6 +93,7 @@
 
   &__main {
     padding: 15px 0;
+    position: relative;
 
     @media (max-width: 968px) {
       padding: 12px 0;
@@ -78,6 +112,33 @@
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // MOBILE MENU BUTTON
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  &__mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: $text-dark;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    @include smooth-transition;
+
+    @media (max-width: 968px) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &:hover {
+      background: $background-light;
+      color: $primary-gold;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // LOGO
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -86,6 +147,11 @@
     
     a {
       display: block;
+      @include smooth-transition;
+
+      &:hover {
+        transform: scale(1.05);
+      }
     }
   }
 
@@ -100,7 +166,7 @@
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // NAVIGATION (DESKTOP ONLY)
+  // NAVIGATION
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   &__nav {
@@ -131,31 +197,104 @@
     }
 
     a {
-      color: #333;
+      color: $text-dark;
       text-decoration: none;
       font-weight: 600;
       font-size: 15px;
-      transition: color 0.3s ease;
       position: relative;
+      padding: 8px 0;
+      @include smooth-transition;
 
-      &:hover {
-        color: #c9a86a;
+      &::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: $primary-gold;
+        transition: all $transition-normal;
+        transform: translateX(-50%);
       }
 
+      &:hover,
       &.active {
-        color: #c9a86a;
+        color: $primary-gold;
 
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: -5px;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: #c9a86a;
+        &::before {
+          width: 100%;
         }
       }
     }
+  }
+
+  // Mobile Navigation
+  &__mobile-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: 0 4px 20px $shadow-medium;
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all $transition-normal;
+    z-index: 1001;
+
+    &--open {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 20px 0;
+
+      li {
+        margin: 0;
+      }
+
+      a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        color: $text-dark;
+        text-decoration: none;
+        font-weight: 500;
+        @include smooth-transition;
+
+        i {
+          width: 20px;
+          text-align: center;
+          color: $text-light;
+        }
+
+        &:hover,
+        &.active {
+          background: $background-light;
+          color: $primary-gold;
+
+          i {
+            color: $primary-gold;
+          }
+        }
+      }
+    }
+  }
+
+  &__mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    animation: fadeIn $transition-normal;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -176,14 +315,12 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: #333;
+    color: $text-dark;
     font-size: 20px;
     padding: 8px;
-    transition: all 0.3s ease;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
+    @include smooth-transition;
 
     @media (max-width: 968px) {
       font-size: 22px;
@@ -191,8 +328,12 @@
     }
 
     &:hover {
-      color: #c9a86a;
+      color: $primary-gold;
       transform: scale(1.1);
+    }
+
+    &--active {
+      color: $primary-gold;
     }
 
     &:disabled {
@@ -209,7 +350,7 @@
     position: relative;
 
     &--active {
-      color: #c9a86a;
+      color: $primary-gold;
     }
   }
 
@@ -222,6 +363,7 @@
     background: #4CAF50;
     border-radius: 50%;
     border: 2px solid white;
+    animation: pulse 2s infinite;
   }
 
   &__cart {
@@ -241,6 +383,7 @@
     border-radius: 10px;
     min-width: 18px;
     text-align: center;
+    animation: bounceIn 0.3s ease;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -262,8 +405,16 @@
     align-items: center;
     gap: 10px;
     padding: 12px;
-    background: #f5f5f5;
+    background: $background-light;
     border-radius: 25px;
+    border: 2px solid transparent;
+    @include smooth-transition;
+
+    &:focus-within {
+      border-color: $primary-gold;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(201, 168, 106, 0.1);
+    }
 
     @media (max-width: 768px) {
       padding: 10px;
@@ -277,7 +428,7 @@
     outline: none;
     font-size: 15px;
     padding: 0 10px;
-    color: #333;
+    color: $text-dark;
 
     &::placeholder {
       color: #999;
@@ -292,16 +443,18 @@
     color: #666;
     font-size: 18px;
     padding: 5px;
-    transition: color 0.3s ease;
+    @include smooth-transition;
     flex-shrink: 0;
 
     &:hover {
-      color: #c9a86a;
+      color: $primary-gold;
+      transform: scale(1.1);
     }
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
     }
   }
 
@@ -313,7 +466,7 @@
     right: 0;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 40px $shadow-medium;
     max-height: 500px;
     overflow-y: auto;
     z-index: 1001;
@@ -333,15 +486,15 @@
     gap: 10px;
     padding: 30px;
     color: #999;
+  }
 
-    i {
-      font-size: 1.2rem;
-      color: #c9a86a;
-    }
-
-    span {
-      font-size: 0.95rem;
-    }
+  &__search-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid $primary-gold;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 
   &__search-empty {
@@ -361,7 +514,7 @@
     p {
       font-size: 1rem;
       font-weight: 600;
-      color: #333;
+      color: $text-dark;
       margin: 0 0 5px 0;
     }
 
@@ -381,8 +534,8 @@
     gap: 15px;
     padding: 12px 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid $border-light;
+    @include smooth-transition;
 
     @media (max-width: 768px) {
       gap: 12px;
@@ -390,17 +543,29 @@
     }
 
     &:hover {
-      background: #f9f9f9;
+      background: $background-light;
+      transform: translateX(5px);
     }
 
     &:last-child {
       border-bottom: none;
     }
 
+    &:focus {
+      outline: 2px solid $primary-gold;
+      outline-offset: -2px;
+    }
+
     > i {
       color: #ccc;
       font-size: 0.9rem;
       flex-shrink: 0;
+      @include smooth-transition;
+    }
+
+    &:hover > i {
+      color: $primary-gold;
+      transform: translateX(3px);
     }
   }
 
@@ -410,7 +575,8 @@
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
-    background: #f5f5f5;
+    background: $background-light;
+    @include smooth-transition;
 
     @media (max-width: 768px) {
       width: 50px;
@@ -421,6 +587,11 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      @include smooth-transition;
+    }
+
+    .header__search-result-item:hover & {
+      transform: scale(1.05);
     }
   }
 
@@ -432,10 +603,8 @@
       font-size: 0.95rem;
       font-weight: 600;
       margin: 0 0 5px 0;
-      color: #333;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      color: $text-dark;
+      @include truncate;
 
       @media (max-width: 768px) {
         font-size: 0.9rem;
@@ -447,6 +616,7 @@
     font-size: 0.8rem;
     color: #999;
     margin: 0 0 5px 0;
+    @include truncate;
 
     @media (max-width: 768px) {
       font-size: 0.75rem;
@@ -461,7 +631,7 @@
     .price {
       font-size: 0.95rem;
       font-weight: 700;
-      color: #c9a86a;
+      color: $primary-gold;
 
       @media (max-width: 768px) {
         font-size: 0.9rem;
@@ -481,7 +651,7 @@
 
   &__search-results-footer {
     padding: 15px 20px;
-    border-top: 1px solid #f5f5f5;
+    border-top: 1px solid $border-light;
     background: #fafafa;
     border-radius: 0 0 12px 12px;
 
@@ -493,7 +663,7 @@
   &__search-view-all {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(135deg, #c9a86a, #b8935a);
+    background: linear-gradient(135deg, $primary-gold, $primary-gold-dark);
     color: white;
     border: none;
     border-radius: 8px;
@@ -504,7 +674,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: all 0.3s ease;
+    @include smooth-transition;
 
     @media (max-width: 768px) {
       padding: 10px;
@@ -531,6 +701,7 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
     animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(2px);
   }
 }
 
@@ -548,7 +719,7 @@
   align-items: center;
   justify-content: space-around;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 10px $shadow-light;
   z-index: 1000;
 
   @media (max-width: 968px) {
@@ -567,15 +738,15 @@
     text-decoration: none;
     font-size: 12px;
     font-weight: 500;
-    transition: all 0.3s ease;
     border: none;
     background: none;
     cursor: pointer;
     position: relative;
+    @include smooth-transition;
 
     i {
       font-size: 22px;
-      transition: all 0.3s ease;
+      @include smooth-transition;
     }
 
     span {
@@ -587,19 +758,16 @@
     }
 
     &--active {
-      color: #c9a86a;
+      color: $primary-gold;
 
       i {
         transform: scale(1.1);
       }
     }
-
-    &--cart {
-      position: relative;
-    }
   }
 
-  &__cart-wrapper {
+  &__cart-wrapper,
+  &__profile-wrapper {
     position: relative;
     display: flex;
     align-items: center;
@@ -618,13 +786,7 @@
     border-radius: 10px;
     min-width: 16px;
     text-align: center;
-  }
-
-  &__profile-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    animation: bounceIn 0.3s ease;
   }
 
   &__online-dot {
@@ -636,6 +798,7 @@
     background: #4CAF50;
     border-radius: 50%;
     border: 2px solid white;
+    animation: pulse 2s infinite;
   }
 }
 
@@ -656,7 +819,7 @@
 // ANIMATIONS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-@keyframes scroll {
+@keyframes scrollBanner {
   0% {
     transform: translateX(0);
   }
@@ -668,7 +831,7 @@
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
@@ -685,8 +848,46 @@
   }
 }
 
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CUSTOM SCROLLBAR FOR SEARCH RESULTS
+// CUSTOM SCROLLBAR
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 .header__search-results {
@@ -700,11 +901,32 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #c9a86a;
+    background: $primary-gold;
     border-radius: 3px;
 
     &:hover {
-      background: #b8935a;
+      background: $primary-gold-dark;
     }
   }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ACCESSIBILITY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus styles for better accessibility
+button:focus-visible,
+a:focus-visible,
+.header__search-result-item:focus-visible {
+  outline: 2px solid $primary-gold;
+  outline-offset: 2px;
+  border-radius: 4px;
 }

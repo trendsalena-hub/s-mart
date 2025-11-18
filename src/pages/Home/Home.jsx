@@ -27,19 +27,25 @@ const Home = () => {
       type: 'image', 
       url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=400&fit=crop',
       duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)'
+      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
+      title: 'Premium Collection',
+      subtitle: 'Discover our exclusive range of products'
     },
     { 
       type: 'image', 
       url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&h=400&fit=crop',
       duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)'
+      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
+      title: 'Summer Sale',
+      subtitle: 'Up to 50% off on selected items'
     },
     { 
       type: 'image', 
       url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&h=400&fit=crop',
       duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)'
+      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
+      title: 'New Arrivals',
+      subtitle: 'Fresh styles just for you'
     }
   ];
 
@@ -79,11 +85,12 @@ const Home = () => {
         createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.seconds ? doc.data().createdAt.seconds * 1000 : doc.data().createdAt) : new Date(0)
       }));
       
-      // Preload product images
+      // Simulate loading for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await preloadProductImages(productsData);
       setProducts(productsData);
     } catch (err) {
-      setError('Failed to load products from database');
+      setError('Failed to load products. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -222,11 +229,23 @@ const Home = () => {
     <div className="main-home">
       <div className={`home ${isVisible ? 'visible' : ''}`}>
         
+        {/* Enhanced Notification */}
         {showNotification && (
           <div className="cart-notification show">
             <div className="notification-content">
-              <i className="fas fa-check-circle"></i>
-              <span>{notificationMessage}</span>
+              <div className="notification-icon">
+                <i className="fas fa-check-circle"></i>
+              </div>
+              <div className="notification-text">
+                <span className="notification-title">Success!</span>
+                <span className="notification-message">{notificationMessage}</span>
+              </div>
+              <button 
+                className="notification-close"
+                onClick={() => setShowNotification(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
             </div>
           </div>
         )}
@@ -234,13 +253,24 @@ const Home = () => {
         {error && (
           <div className="error-notification show">
             <div className="notification-content">
-              <i className="fas fa-exclamation-triangle"></i>
-              <span>{error}</span>
-              <button onClick={() => setError('')}>×</button>
+              <div className="notification-icon">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <div className="notification-text">
+                <span className="notification-title">Oops!</span>
+                <span className="notification-message">{error}</span>
+              </div>
+              <button 
+                className="notification-close"
+                onClick={() => setError('')}
+              >
+                <i className="fas fa-times"></i>
+              </button>
             </div>
           </div>
         )}
 
+        {/* Hero Section with Reduced Height */}
         <section className="hero">
           <div className="hero__slider-container">
             <div className="hero__slider">
@@ -280,6 +310,7 @@ const Home = () => {
               ))}
             </div>
 
+            {/* Slider Indicators */}
             {banners.length > 1 && (
               <div className="hero__slider-indicators">
                 {banners.map((slide, idx) => (
@@ -304,6 +335,7 @@ const Home = () => {
               </div>
             )}
 
+            {/* Navigation Buttons */}
             {banners.length > 1 && (
               <>
                 <button 
@@ -325,21 +357,24 @@ const Home = () => {
           </div>
         </section>
 
+        {/* Enhanced Loader */}
         {loading && (
           <section className="section">
             <div className="container">
               <div className="loading-state">
-                <div className="loading-spinner">
-                  <div className="spinner-ring"></div>
-                  <div className="spinner-ring"></div>
-                  <div className="spinner-ring"></div>
+                <div className="golden-loader">
+                  <div className="loader-spinner"></div>
+                  <div className="loader-content">
+                    <h3>Discovering Amazing Products</h3>
+                    <p>We're curating the best collection just for you...</p>
+                  </div>
                 </div>
-                <p>Discovering Amazing Products...</p>
               </div>
             </div>
           </section>
         )}
 
+        {/* Products Section */}
         {!loading && (
           <>
             {newArrivals.length > 0 && (
@@ -443,6 +478,7 @@ const Home = () => {
           </>
         )}
 
+        {/* Empty State */}
         {!loading && products.length === 0 && (
           <section className="section section--premium">
             <div className="container">
@@ -451,7 +487,11 @@ const Home = () => {
                   <i className="fas fa-box-open"></i>
                 </div>
                 <h3>No Products Available</h3>
-                <p>Check back soon for new arrivals!</p>
+                <p>We're working on bringing you amazing products. Check back soon!</p>
+                <button className="retry-btn" onClick={loadProductsFromFirebase}>
+                  <i className="fas fa-redo"></i>
+                  Try Again
+                </button>
               </div>
             </div>
           </section>

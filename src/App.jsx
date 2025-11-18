@@ -10,7 +10,7 @@ const Header = lazy(() => import("./components/Header/Header.jsx"));
 const Footer = lazy(() => import("./components/Footer/Footer.jsx"));
 const InstallPrompt = lazy(() => import("./components/InstallPrompt/InstallPrompt.jsx"));
 
-// FIX: Updated paths to point inside page-specific folders
+// FIX: Updated all paths to point inside page-specific folders
 const pages = {
   Home: lazy(() => import("./pages/Home/Home.jsx")),
   Collections: lazy(() => import("./pages/Collections/Collections.jsx")),
@@ -26,27 +26,26 @@ const pages = {
   OrderTracking: lazy(() => import("./pages/OrderTrackingPage/OrderTrackingPage.jsx")),
   ShippingPolicy: lazy(() => import("./pages/ShippingPolicy/ShippingPolicy.jsx")),
   Faq: lazy(() => import("./pages/Faq/FaqPage.jsx")),
-
-  // === NEW PAGE ADDED ===
   Payment: lazy(() => import("./pages/Payment/PaymentPage.jsx")),
+
+  // === NEW BLOG PAGES ADDED ===
+  BlogListing: lazy(() => import("./pages/BlogListing/BlogListingPage.jsx")),
+  BlogPost: lazy(() => import("./pages/BlogPost/BlogPostPage.jsx")),
 };
 
 // Scroll to top on route change
-// ... (ScrollToTop component) ...
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => window.scrollTo({ top: 0, behavior: "smooth" }), [pathname]);
   return null;
 };
 
-// ... (Loading component) ...
 const Loading = () => (
   <div className="loading-spinner">
     <div className="spinner"><div className="spinner-ring"></div></div>
   </div>
 );
 
-// ... (NotFound component) ...
 const NotFound = () => (
   <div className="not-found">
     <i className="fas fa-shopping-bag not-found__icon"></i>
@@ -90,12 +89,15 @@ export default function App() {
               <Route path="/shipping" element={<Layout><pages.ShippingPolicy /></Layout>} />
               <Route path="/faq" element={<Layout><pages.Faq /></Layout>} />
 
+              {/* === NEW BLOG ROUTES === */}
+              <Route path="/blog" element={<Layout><pages.BlogListing /></Layout>} />
+              <Route path="/blog/:slug" element={<Layout><pages.BlogPost /></Layout>} />
+
               {/* Shop */}
               <Route path="/cart" element={<Layout><pages.Cart /></Layout>} />
               <Route path="/checkout" element={<Layout><pages.Checkout /></Layout>} />
               <Route path="/quick-view" element={<Layout><pages.QuickView /></Layout>} />
               
-              {/* === NEW PAYMENT ROUTE (No Layout) === */}
               <Route path="/payment" element={<PaymentLayout><pages.Payment /></PaymentLayout>} />
 
               {/* Auth */}

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { auth, db } from '../../firebase/config';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useCart } from '../context/CartContext.jsx';
+import { auth, db } from '../../firebase/config.js';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import logo from '../../assets/Alena-trends.png';
 import './Header.scss';
 
@@ -19,22 +19,85 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  const { getCartItemsCount } = useCart();
-  const cartCount = getCartItemsCount();
+  const searchInputRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
+  const headerRef = useRef(null);
+  
+  const { cartItems } = useCart();
+  const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+  
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Listen to authentication state
+  // Debounced search function
+  const performSearch = useCallback((query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase().trim();
+    const results = allProducts.filter(product => {
+      const titleMatch = product.title?.toLowerCase().includes(lowerQuery);
+      const categoryMatch = product.category?.toLowerCase().includes(lowerQuery);
+      const brandMatch = product.brand?.toLowerCase().includes(lowerQuery);
+      const tagsMatch = product.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
+      const materialMatch = product.material?.toLowerCase().includes(lowerQuery);
+      
+      return titleMatch || categoryMatch || brandMatch || tagsMatch || materialMatch;
+    });
+
+    setSearchResults(results.slice(0, 8)); // Limit to 8 results for better performance
+  }, [allProducts]);
+
+  // Optimized scroll handler with throttling
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          
+          // Hide header when scrolling down, show when scrolling up
+          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            setIsVisible(false);
+          } else if (currentScrollY < lastScrollY || currentScrollY <= 100) {
+            setIsVisible(true);
+          }
+
+          // Add scrolled class for background
+          if (currentScrollY > 20) {
+            setIsScrolled(true);
+          } else {
+            setIsScrolled(false);
+          }
+
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
+
+  // Authentication state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Load banner settings from Firebase
+  // Load banner settings
   useEffect(() => {
     const loadBannerSettings = async () => {
       try {
@@ -48,11 +111,10 @@ const Header = () => {
         console.error('Error loading banner settings:', err);
       }
     };
-
     loadBannerSettings();
   }, []);
 
-  // Load all products for search
+  // Load products for search with error handling
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -66,37 +128,10 @@ const Header = () => {
         console.error('Error loading products:', error);
       }
     };
-
     loadProducts();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-
-      if (currentScrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
-
-  // Search functionality
+  // Optimized search with debouncing
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setSearchResults([]);
@@ -105,43 +140,50 @@ const Header = () => {
     }
 
     setIsSearching(true);
-    const timer = setTimeout(() => {
-      performSearch(searchQuery);
-    }, 300); // Debounce search
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const performSearch = (query) => {
-    const lowerQuery = query.toLowerCase().trim();
     
-    const results = allProducts.filter(product => {
-      const titleMatch = product.title?.toLowerCase().includes(lowerQuery);
-      const categoryMatch = product.category?.toLowerCase().includes(lowerQuery);
-      const brandMatch = product.brand?.toLowerCase().includes(lowerQuery);
-      const tagsMatch = product.tags?.some(tag => tag.toLowerCase().includes(lowerQuery));
-      const materialMatch = product.material?.toLowerCase().includes(lowerQuery);
-      
-      return titleMatch || categoryMatch || brandMatch || tagsMatch || materialMatch;
-    });
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-    setSearchResults(results.slice(0, 10)); // Limit to 10 results
-    setIsSearching(false);
-  };
+    // Set new timeout with debounce
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(searchQuery);
+      setIsSearching(false);
+    }, 250);
 
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, performSearch]);
+
+  // Focus management for search
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const toggleSearch = useCallback(() => {
+    setIsSearchOpen(prev => !prev);
     if (!isSearchOpen) {
       setSearchQuery('');
       setSearchResults([]);
     }
-  };
+  }, [isSearchOpen]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      toggleSearch();
+      setIsSearchOpen(false);
     }
   };
 
@@ -149,14 +191,23 @@ const Header = () => {
     navigate(`/quick-view`, { 
       state: { productId } 
     });
-    toggleSearch();
+    setIsSearchOpen(false);
   };
 
   const handleProfileClick = () => {
-    if (user) {
-      navigate('/profile');
-    } else {
-      navigate('/login');
+    navigate(user ? '/profile' : '/login');
+  };
+
+  const closeSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, []);
+
+  // Keyboard navigation for search
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      closeSearch();
     }
   };
 
@@ -166,23 +217,20 @@ const Header = () => {
 
   return (
     <>
-      <header className={`header ${isScrolled ? 'header--scrolled' : ''} ${!isVisible ? 'header--hidden' : ''}`}>
-        {/* Top Banner - Dynamic from Firebase */}
+      <header 
+        ref={headerRef}
+        className={`header ${isScrolled ? 'header--scrolled' : ''} ${!isVisible ? 'header--hidden' : ''}`}
+        onKeyDown={handleKeyDown}
+      >
+        {/* Top Banner */}
         {showBanner && (
           <div className="header__banner">
             <div className="header__banner-content">
-              <span>
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {bannerText}
-              </span>
+              <span>{bannerText}</span>
+              <span>{bannerText}</span>
+              <span>{bannerText}</span>
+              <span>{bannerText}</span>
+              <span>{bannerText}</span>
             </div>
           </div>
         )}
@@ -191,27 +239,49 @@ const Header = () => {
         <div className="header__main">
           <div className="container">
             <div className="header__content">
+
               {/* Logo */}
               <div className="header__logo">
-                <Link to="/">
+                <Link to="/" aria-label="Alena Trends Home">
                   <img src={logo} alt="Alena Trends" className="header__logo-img" />
                 </Link>
               </div>
 
               {/* Desktop Navigation */}
-              <nav className="header__nav header__nav--desktop">
+              <nav className="header__nav header__nav--desktop" aria-label="Main navigation">
                 <ul className="header__nav-list">
-                  <li><Link to="/" className={isActive('/') ? 'active' : ''}>Home</Link></li>
-                  <li><Link to="/collections" className={isActive('/collections') ? 'active' : ''}>Collections</Link></li>
-                  <li><Link to="/about" className={isActive('/about') ? 'active' : ''}>About Us</Link></li>
-                  <li><Link to="/contact" className={isActive('/contact') ? 'active' : ''}>Contact</Link></li>
+                  <li>
+                    <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>
+                      Home
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/collections" className={({ isActive }) => isActive ? 'active' : ''}>
+                      Collections
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/blog" className={({ isActive }) => isActive ? 'active' : ''}>
+                      Blogs
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/about" className={({ isActive }) => isActive ? 'active' : ''}>
+                      About Us
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/contact" className={({ isActive }) => isActive ? 'active' : ''}>
+                      Contact
+                    </NavLink>
+                  </li>
                 </ul>
               </nav>
 
               {/* Desktop Actions */}
               <div className="header__actions">
                 <button 
-                  className="header__action-btn"
+                  className={`header__action-btn ${isSearchOpen ? 'header__action-btn--active' : ''}`}
                   onClick={toggleSearch}
                   aria-label="Search"
                 >
@@ -220,7 +290,7 @@ const Header = () => {
                 <Link to="/cart" className="header__action-btn header__cart" aria-label="Cart">
                   <i className="fas fa-shopping-cart"></i>
                   {cartCount > 0 && (
-                    <span className="header__cart-count">{cartCount}</span>
+                    <span className="header__cart-count">{cartCount > 99 ? '99+' : cartCount}</span>
                   )}
                 </Link>
                 <button 
@@ -240,29 +310,69 @@ const Header = () => {
               </div>
             </div>
 
+            {/* Mobile Navigation Menu */}
+            <div className={`header__mobile-nav ${isMobileMenuOpen ? 'header__mobile-nav--open' : ''}`}>
+              <nav aria-label="Mobile navigation">
+                <ul>
+                  <li>
+                    <NavLink to="/" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-home"></i>
+                      Home
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/collections" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-th-large"></i>
+                      Collections
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/blog" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-file-alt"></i>
+                      Blogs
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/about" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-info-circle"></i>
+                      About Us
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-envelope"></i>
+                      Contact
+                    </NavLink>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
             {/* Search Bar */}
             {isSearchOpen && (
               <div className="header__search">
                 <form onSubmit={handleSearchSubmit} className="header__search-form">
                   <input 
+                    ref={searchInputRef}
                     type="text" 
-                    placeholder="Search for products..." 
+                    placeholder="Search for products, brands, categories..." 
                     className="header__search-input"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
+                    autoComplete="off"
                   />
                   <button 
                     type="submit"
                     className="header__search-btn"
                     disabled={!searchQuery.trim()}
+                    aria-label="Search"
                   >
                     <i className="fas fa-search"></i>
                   </button>
                   <button 
                     type="button"
                     className="header__search-close"
-                    onClick={toggleSearch}
+                    onClick={closeSearch}
                     aria-label="Close search"
                   >
                     <i className="fas fa-times"></i>
@@ -274,7 +384,7 @@ const Header = () => {
                   <div className="header__search-results">
                     {isSearching ? (
                       <div className="header__search-loading">
-                        <i className="fas fa-spinner fa-spin"></i>
+                        <div className="header__search-spinner"></div>
                         <span>Searching...</span>
                       </div>
                     ) : searchResults.length > 0 ? (
@@ -285,11 +395,15 @@ const Header = () => {
                               key={product.id}
                               className="header__search-result-item"
                               onClick={() => handleProductClick(product.id)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyPress={(e) => e.key === 'Enter' && handleProductClick(product.id)}
                             >
                               <div className="header__search-result-image">
                                 <img 
                                   src={product.images?.[0] || product.image} 
                                   alt={product.title}
+                                  loading="lazy"
                                 />
                               </div>
                               <div className="header__search-result-info">
@@ -312,7 +426,7 @@ const Header = () => {
                           <button
                             onClick={() => {
                               navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-                              toggleSearch();
+                              closeSearch();
                             }}
                             className="header__search-view-all"
                           >
@@ -325,7 +439,7 @@ const Header = () => {
                       <div className="header__search-empty">
                         <i className="fas fa-search"></i>
                         <p>No products found for "{searchQuery}"</p>
-                        <span>Try different keywords</span>
+                        <span>Try different keywords or browse categories</span>
                       </div>
                     )}
                   </div>
@@ -338,47 +452,70 @@ const Header = () => {
 
       {/* Search Overlay */}
       {isSearchOpen && (
-        <div className="header__search-overlay" onClick={toggleSearch}></div>
+        <div className="header__search-overlay" onClick={closeSearch}></div>
       )}
 
       {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav">
-        <Link 
+      <nav className="mobile-nav" aria-label="Bottom navigation">
+        <NavLink 
           to="/" 
-          className={`mobile-nav__item ${isActive('/') ? 'mobile-nav__item--active' : ''}`}
+          className={({ isActive }) => 
+            `mobile-nav__item ${isActive ? 'mobile-nav__item--active' : ''}`
+          }
           aria-label="Home"
         >
           <i className="fas fa-home"></i>
           <span>Home</span>
-        </Link>
+        </NavLink>
         
-        <Link 
+        <NavLink 
           to="/collections" 
-          className={`mobile-nav__item ${isActive('/collections') ? 'mobile-nav__item--active' : ''}`}
+          className={({ isActive }) => 
+            `mobile-nav__item ${isActive ? 'mobile-nav__item--active' : ''}`
+          }
           aria-label="Collections"
         >
           <i className="fas fa-th-large"></i>
           <span>Collections</span>
-        </Link>
+        </NavLink>
         
-        <Link 
-          to="/about" 
-          className={`mobile-nav__item ${isActive('/about') ? 'mobile-nav__item--active' : ''}`}
-          aria-label="About"
+        <NavLink 
+          to="/blog" 
+          className={({ isActive }) => 
+            `mobile-nav__item ${isActive ? 'mobile-nav__item--active' : ''}`
+          }
+          aria-label="Blog"
         >
-          <i className="fas fa-info-circle"></i>
-          <span>About</span>
-        </Link>
+          <i className="fas fa-file-alt"></i>
+          <span>Blog</span>
+        </NavLink>
 
-        <Link 
-          to="/contact" 
-          className={`mobile-nav__item ${isActive('/contact') ? 'mobile-nav__item--active' : ''}`}
-          aria-label="Contact"
+        <NavLink 
+          to="/cart" 
+          className={({ isActive }) => 
+            `mobile-nav__item ${isActive ? 'mobile-nav__item--active' : ''}`
+          }
+          aria-label="Cart"
         >
-          <i className="fas fa-envelope"></i>
-          <span>Contact</span>
-        </Link>
+          <div className="mobile-nav__cart-wrapper">
+            <i className="fas fa-shopping-cart"></i>
+            {cartCount > 0 && (
+              <span className="mobile-nav__cart-badge">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+          </div>
+          <span>Cart</span>
+        </NavLink>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="header__mobile-overlay" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
     </>
   );
 };
