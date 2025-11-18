@@ -193,11 +193,9 @@ const BlogListingPage = () => {
                   </div>
                   <div className="meta-details">
                     <span>{formatDate(featuredPost.createdAt)}</span>
-                    <span>•</span>
                     <span>{getReadTime(featuredPost)}</span>
                     {featuredPost.views > 0 && (
                       <>
-                        <span>•</span>
                         <span>
                           <i className="fas fa-eye"></i>
                           {featuredPost.views}
@@ -206,7 +204,6 @@ const BlogListingPage = () => {
                     )}
                     {featuredPost.likes > 0 && (
                       <>
-                        <span>•</span>
                         <span>
                           <i className="fas fa-heart"></i>
                           {featuredPost.likes}

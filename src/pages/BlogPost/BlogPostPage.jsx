@@ -474,7 +474,7 @@ const BlogPostPage = () => {
                     <p>{relatedPost.excerpt}</p>
                     <div className="related-post-meta">
                       <span>{formatDate(relatedPost.createdAt)}</span>
-                      <span>•</span>
+                      
                       <span>{getReadTime(relatedPost)}</span>
                     </div>
                   </div>
