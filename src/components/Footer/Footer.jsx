@@ -1,67 +1,70 @@
-import React, { useState } from 'react';
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
-import { db } from '../../firebase/config.js'; // FIX: Corrected path
-import './Footer.scss';
+import React, { useState } from "react";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "../../firebase/config";
+import "./Footer.scss";
 
 const Footer = () => {
   const [subscribing, setSubscribing] = useState(false);
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
+
     const email = e.target.elements.email.value.trim().toLowerCase();
     if (!email) return alert("Please enter an email address");
 
     setSubscribing(true);
 
     try {
-      // Duplicate check
-      const q = query(collection(db, "subscribers"), where("email", "==", email));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        alert("You are already subscribed with this email!");
-        setSubscribing(false);
-        return;
+      // Call Firebase Cloud Function
+      const subscribeFn = httpsCallable(functions, "subscribeToNewsletter");
+      const response = await subscribeFn({ email });
+
+      if (response?.data?.success) {
+        alert("🎉 Subscribed successfully! Check your email.");
+        e.target.reset();
+      } else {
+        alert("Subscription failed.");
       }
-      await addDoc(collection(db, "subscribers"), { email, subscribedAt: new Date().toISOString() });
-      alert("Subscribed successfully!");
-      e.target.reset();
     } catch (error) {
-      console.error("Subscription failed:", error);
+      console.error("Subscription error:", error);
       alert("Subscription failed. Please try again later.");
-    } finally {
-      setSubscribing(false);
     }
+
+    setSubscribing(false);
   };
 
   return (
     <footer className="footer">
-      {/* Main Footer Content */}
+      {/* Main Footer */}
       <div className="footer__main">
         <div className="container">
           <div className="footer__grid">
-            {/* About Section */}
+            
+            {/* About */}
             <div className="footer__section">
               <h3 className="footer__title">About AlenaTrends</h3>
               <p className="footer__text">
-                Discover the latest trends in women's fashion.
-                Quality ethnic, western and casual wear at affordable prices.
-                Elegance meets modern style.
+                Discover the latest trends in women's fashion. Quality ethnic,
+                western and casual wear at affordable prices. Elegance meets
+                modern style.
               </p>
+
               <div className="footer__social">
-                <a href="https://facebook.com/alenatrends" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <a href="https://facebook.com/alenatrends" target="_blank">
                   <i className="fab fa-facebook-f"></i>
                 </a>
-                <a href="https://instagram.com/alenatrends_fashion" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <a href="https://instagram.com/alenatrends_fashion" target="_blank">
                   <i className="fab fa-instagram"></i>
                 </a>
-                <a href="https://twitter.com/alenatrends" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <a href="https://twitter.com/alenatrends" target="_blank">
                   <i className="fab fa-twitter"></i>
                 </a>
-                <a href="https://youtube.com/alenatrends" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <a href="https://youtube.com/alenatrends" target="_blank">
                   <i className="fab fa-youtube"></i>
                 </a>
               </div>
             </div>
+
             {/* Quick Links */}
             <div className="footer__section">
               <h3 className="footer__title">Quick Links</h3>
@@ -72,6 +75,7 @@ const Footer = () => {
                 <li><a href="/faq">FAQ</a></li>
               </ul>
             </div>
+
             {/* Categories */}
             <div className="footer__section">
               <h3 className="footer__title">Categories</h3>
@@ -82,32 +86,35 @@ const Footer = () => {
                 <li><a href="/new-arrivals">New Arrivals</a></li>
               </ul>
             </div>
-            {/* Contact Info */}
+
+            {/* Contact */}
             <div className="footer__section">
               <h3 className="footer__title">Contact Us</h3>
               <ul className="footer__contact">
                 <li>
-                  <i className="fas fa-map-marker-alt"></i>
+                  <i className="fas fa-map-marker-alt"></i> 
                   <span>123 Fashion Street, Mumbai, India</span>
                 </li>
                 <li>
-                  <i className="fas fa-phone"></i>
+                  <i className="fas fa-phone"></i> 
                   <span>+91 1234567890</span>
                 </li>
                 <li>
-                  <i className="fas fa-envelope"></i>
+                  <i className="fas fa-envelope"></i> 
                   <span>info@alenatrends.com</span>
                 </li>
                 <li>
-                  <i className="fas fa-clock"></i>
+                  <i className="fas fa-clock"></i> 
                   <span>Mon - Sat: 10 AM - 7 PM</span>
                 </li>
               </ul>
             </div>
+
           </div>
         </div>
       </div>
-      {/* Newsletter Section */}
+
+      {/* Newsletter */}
       <div className="footer__newsletter">
         <div className="container">
           <div className="footer__newsletter-content">
@@ -115,6 +122,7 @@ const Footer = () => {
               <h3>Subscribe to our Newsletter</h3>
               <p>Get latest updates on new arrivals and exclusive offers</p>
             </div>
+
             <form className="footer__newsletter-form" onSubmit={handleSubscribe}>
               <input
                 type="email"
@@ -128,16 +136,19 @@ const Footer = () => {
                 {subscribing ? "Please wait..." : "Subscribe"}
               </button>
             </form>
+
           </div>
         </div>
       </div>
+
       {/* Bottom Bar */}
       <div className="footer__bottom">
         <div className="container">
           <div className="footer__bottom-content">
             <p className="footer__copyright">
-              &copy; {new Date().getFullYear()} AlenaTrends. All rights reserved.
+              © {new Date().getFullYear()} AlenaTrends. All rights reserved.
             </p>
+
             <div className="footer__payment">
               <span>We Accept:</span>
               <div className="footer__payment-icons">
@@ -148,6 +159,7 @@ const Footer = () => {
                 <i className="fab fa-cc-amex"></i>
               </div>
             </div>
+
           </div>
         </div>
       </div>

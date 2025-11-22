@@ -207,62 +207,112 @@ const AddProduct = ({ onSuccess, onError, onLoadProducts, productToEdit, onClear
     setSubmitting(true);
     onError('');
     onSuccess('');
-
+  
     if (productForm.images.length === 0) {
       onError('Please upload at least one product image.');
       setSubmitting(false);
       return;
     }
-
+  
     try {
-      // Convert validUntil to a Timestamp if it's enabled and exists
+      // Convert validUntil to Timestamp
       let validUntilTimestamp = null;
       if (productForm.offer.enabled && productForm.offer.validUntil) {
         validUntilTimestamp = Timestamp.fromDate(new Date(productForm.offer.validUntil));
       }
-
+  
       const productData = {
         ...productForm,
         price: parseFloat(productForm.price),
         originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
         discount: productForm.discount ? parseFloat(productForm.discount) : null,
         stock: parseInt(productForm.stock, 10),
-        images: productForm.images.map(img => img.url), // Save only URLs
-        image: productForm.images[0]?.url || '', // Main image
+        images: productForm.images.map(img => img.url),
+        image: productForm.images[0]?.url || '',
         sizes: productForm.sizes,
         colors: productForm.colors.filter(c => c.trim() !== ''),
         tags: productForm.tags ? productForm.tags.split(',').map(t => t.trim()) : [],
         offer: {
           ...productForm.offer,
           value: productForm.offer.value ? parseFloat(productForm.offer.value) : 0,
-          validUntil: validUntilTimestamp // Save the Timestamp
+          validUntil: validUntilTimestamp
         },
         updatedAt: Timestamp.now(),
-        // FIX: Use createdAt from internal editingProduct state if it exists
         createdAt: editingProduct ? editingProduct.createdAt : Timestamp.now(),
       };
-      
-      // Remove the full images object from the final data
-      delete productData.productToEdit; 
-
+  
+      delete productData.productToEdit;
+  
+      let productRef;
+  
       if (editingProduct) {
-        // FIX: Use ID from internal state
-        await updateDoc(doc(db, 'products', editingProduct.id), productData);
-        onSuccess('Product updated successfully!');
+        await updateDoc(doc(db, "products", editingProduct.id), productData);
+        productRef = { id: editingProduct.id };
+        onSuccess("Product updated successfully!");
       } else {
-        await addDoc(collection(db, 'products'), productData);
-        onSuccess('Product added successfully!');
+        productRef = await addDoc(collection(db, "products"), productData);
+        onSuccess("Product added successfully!");
       }
-
-      resetForm(); // This will clear the form
-      onLoadProducts(); // This will refresh the list
+  
+      // ------------------------------------------------------------------
+      // 🔥 ADD PRODUCT NOTIFICATION
+      // ------------------------------------------------------------------
+      await addDoc(collection(db, "notifications"), {
+        type: "product",
+        title: "New Product Added!",
+        message: `New product "${productData.title}" is now available!`,
+        price: productData.price,
+        image: productData.image,
+        product: {
+          name: productData.title,
+          image: productData.image,
+          price: productData.price
+        },
+        docId: productRef.id,
+        isRead: false,
+        createdAt: Timestamp.now(),
+      });
+  
+      // ------------------------------------------------------------------
+      // 🔥 ADD OFFER NOTIFICATION (ONLY IF OFFER ENABLED)
+      // ------------------------------------------------------------------
+      if (productData.offer.enabled) {
+        await addDoc(collection(db, "notifications"), {
+          type: "product_offer",
+          title: `Offer on ${productData.title}!`,
+          message: `${productData.offer.title} - ${
+            productData.offer.type === "percentage"
+              ? `${productData.offer.value}% OFF`
+              : `₹${productData.offer.value} OFF`
+          }`,
+          image: productData.image,
+          offer: productData.offer,
+          price: productData.price,
+          product: {
+            name: productData.title,
+            image: productData.image,
+            price: productData.price,
+            discountType: productData.offer.type,
+            discountValue: productData.offer.value,
+          },
+          docId: productRef.id,
+          isRead: false,
+          createdAt: Timestamp.now(),
+        });
+      }
+  
+      // Reset
+      resetForm();
+      onLoadProducts();
+  
     } catch (err) {
-      console.error('Error saving product:', err);
-      onError('Failed to save product. Please try again.');
+      console.error("Error saving product:", err);
+      onError("Failed to save product. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
+  
 
   // FIX: Update resetForm to also call onClearEdit
   const resetForm = () => {

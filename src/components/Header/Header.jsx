@@ -3,7 +3,17 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { auth, db } from '../../firebase/config.js';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy, 
+  limit, 
+  where,
+  onSnapshot 
+} from 'firebase/firestore';
 import logo from '../../assets/Alena-trends.png';
 import './Header.scss';
 
@@ -20,6 +30,10 @@ const Header = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [viewedNotifications, setViewedNotifications] = useState(new Set());
+  const [personalNotificationCount, setPersonalNotificationCount] = useState(0);
+  const [publicNotificationCount, setPublicNotificationCount] = useState(0);
   
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
@@ -30,6 +44,138 @@ const Header = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Load viewed notifications from localStorage on component mount
+  useEffect(() => {
+    const savedViewedNotifications = JSON.parse(localStorage.getItem('viewedNotifications') || '[]');
+    setViewedNotifications(new Set(savedViewedNotifications));
+  }, []);
+
+  // Save viewed notifications to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('viewedNotifications', JSON.stringify([...viewedNotifications]));
+  }, [viewedNotifications]);
+
+  // Load personal notifications count (real-time)
+  useEffect(() => {
+    if (!user) {
+      setPersonalNotificationCount(0);
+      return;
+    }
+
+    const personalNotificationsQuery = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('isRead', '==', false)
+    );
+
+    const unsubscribe = onSnapshot(personalNotificationsQuery, (snapshot) => {
+      setPersonalNotificationCount(snapshot.size);
+    }, (error) => {
+      console.error("Error in personal notifications listener:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Load public notifications count (products and blogs)
+  const loadPublicNotificationCount = useCallback(async () => {
+    try {
+      let publicCount = 0;
+
+      // Load latest products
+      const productsRef = collection(db, 'products');
+      const productsQuery = query(productsRef, orderBy('createdAt', 'desc'), limit(10));
+      const productsSnapshot = await getDocs(productsQuery);
+      
+      const newProducts = productsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        type: 'product'
+      }));
+
+      // Load latest blog posts
+      const blogRef = collection(db, 'blogPosts');
+      const blogQuery = query(blogRef, orderBy('createdAt', 'desc'), limit(10));
+      const blogSnapshot = await getDocs(blogQuery);
+      
+      const newBlogs = blogSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(data => data.status === 'published')
+        .map(data => ({
+          id: data.slug || data.id,
+          type: 'blog'
+        }));
+
+      // Filter out viewed public notifications
+      const unviewedPublicNotifications = [...newProducts, ...newBlogs].filter(
+        notification => !viewedNotifications.has(`${notification.type}-${notification.id}`)
+      );
+
+      publicCount = unviewedPublicNotifications.length;
+      setPublicNotificationCount(publicCount);
+    } catch (error) {
+      console.error("Error loading public notification count:", error);
+      setPublicNotificationCount(0);
+    }
+  }, [viewedNotifications]);
+
+  // Update total notification count when personal or public counts change
+  useEffect(() => {
+    const totalCount = personalNotificationCount + publicNotificationCount;
+    setNotificationCount(totalCount);
+  }, [personalNotificationCount, publicNotificationCount]);
+
+  // Load public notification count on component mount and when viewedNotifications changes
+  useEffect(() => {
+    loadPublicNotificationCount();
+  }, [loadPublicNotificationCount]);
+
+  // Event listeners for notification updates
+  useEffect(() => {
+    const handleNotificationRead = () => {
+      // Reload public notification count when a notification is read
+      loadPublicNotificationCount();
+    };
+
+    const handleNotificationDeleted = () => {
+      // Personal count updates automatically via real-time listener
+      // Public count needs to be reloaded
+      loadPublicNotificationCount();
+    };
+
+    const handleAllNotificationsCleared = () => {
+      // Both counts should be reset
+      setPersonalNotificationCount(0);
+      setPublicNotificationCount(0);
+    };
+
+    const handlePublicNotificationViewed = (event) => {
+      const { notificationId, notificationType } = event.detail;
+      const notificationKey = `${notificationType}-${notificationId}`;
+      setViewedNotifications(prev => {
+        const newSet = new Set(prev);
+        newSet.add(notificationKey);
+        return newSet;
+      });
+    };
+
+    window.addEventListener('notificationRead', handleNotificationRead);
+    window.addEventListener('notificationDeleted', handleNotificationDeleted);
+    window.addEventListener('allNotificationsCleared', handleAllNotificationsCleared);
+    window.addEventListener('publicNotificationViewed', handlePublicNotificationViewed);
+
+    return () => {
+      window.removeEventListener('notificationRead', handleNotificationRead);
+      window.removeEventListener('notificationDeleted', handleNotificationDeleted);
+      window.removeEventListener('allNotificationsCleared', handleAllNotificationsCleared);
+      window.removeEventListener('publicNotificationViewed', handlePublicNotificationViewed);
+    };
+  }, [loadPublicNotificationCount]);
+
+  // Handle notification click
+  const handleNotificationsClick = () => {
+    navigate('/notifications');
+  };
 
   // Debounced search function
   const performSearch = useCallback((query) => {
@@ -49,7 +195,7 @@ const Header = () => {
       return titleMatch || categoryMatch || brandMatch || tagsMatch || materialMatch;
     });
 
-    setSearchResults(results.slice(0, 8)); // Limit to 8 results for better performance
+    setSearchResults(results.slice(0, 8));
   }, [allProducts]);
 
   // Optimized scroll handler with throttling
@@ -211,10 +357,6 @@ const Header = () => {
     }
   };
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
-
   return (
     <>
       <header 
@@ -287,14 +429,31 @@ const Header = () => {
                 >
                   <i className="fas fa-search"></i>
                 </button>
+
                 <Link to="/cart" className="header__action-btn header__cart" aria-label="Cart">
                   <i className="fas fa-shopping-cart"></i>
                   {cartCount > 0 && (
                     <span className="header__cart-count">{cartCount > 99 ? '99+' : cartCount}</span>
                   )}
                 </Link>
+
+                {/* Notifications Button with Count */}
                 <button 
-                  className={`header__action-btn header__profile-btn ${user ? 'header__profile-btn--active' : ''}`}
+                  className="header__action-btn header__notifications-btn"
+                  onClick={handleNotificationsClick}
+                  aria-label="Notifications"
+                >
+                  <i className="fas fa-bell"></i>
+                  {notificationCount > 0 && (
+                    <span className="header__notifications-count">
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Profile Button - Hidden on mobile, shown on desktop */}
+                <button 
+                  className={`header__action-btn header__profile-btn ${user ? 'header__profile-btn--active' : ''} header__profile-btn--desktop-only`}
                   onClick={handleProfileClick}
                   aria-label={user ? 'My Profile' : 'Login'}
                 >
@@ -330,6 +489,17 @@ const Header = () => {
                     <NavLink to="/blog" onClick={() => setIsMobileMenuOpen(false)}>
                       <i className="fas fa-file-alt"></i>
                       Blogs
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/notifications" onClick={() => setIsMobileMenuOpen(false)}>
+                      <i className="fas fa-bell"></i>
+                      Notifications
+                      {notificationCount > 0 && (
+                        <span className="header__mobile-notification-count">
+                          {notificationCount > 99 ? '99+' : notificationCount}
+                        </span>
+                      )}
                     </NavLink>
                   </li>
                   <li>
@@ -455,7 +625,7 @@ const Header = () => {
         <div className="header__search-overlay" onClick={closeSearch}></div>
       )}
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - Profile moved here from header */}
       <nav className="mobile-nav" aria-label="Bottom navigation">
         <NavLink 
           to="/" 
@@ -491,21 +661,29 @@ const Header = () => {
         </NavLink>
 
         <NavLink 
-          to="/cart" 
+          to="/about" 
           className={({ isActive }) => 
             `mobile-nav__item ${isActive ? 'mobile-nav__item--active' : ''}`
           }
-          aria-label="Cart"
+          aria-label="About Us"
         >
-          <div className="mobile-nav__cart-wrapper">
-            <i className="fas fa-shopping-cart"></i>
-            {cartCount > 0 && (
-              <span className="mobile-nav__cart-badge">
-                {cartCount > 99 ? '99+' : cartCount}
-              </span>
-            )}
+          <i className="fas fa-info-circle"></i>
+          <span>About</span>
+        </NavLink>
+
+        {/* Profile in mobile footer - Only shown on mobile */}
+        <NavLink 
+          to={user ? '/profile' : '/login'}
+          className={({ isActive }) => 
+            `mobile-nav__item mobile-nav__profile ${isActive ? 'mobile-nav__item--active' : ''}`
+          }
+          aria-label={user ? 'My Profile' : 'Login'}
+        >
+          <div className="mobile-nav__profile-wrapper">
+            <i className={`fas ${user ? 'fa-user-circle' : 'fa-user'}`}></i>
+            {user && <span className="mobile-nav__online-indicator"></span>}
           </div>
-          <span>Cart</span>
+          <span>{user ? 'Profile' : 'Login'}</span>
         </NavLink>
       </nav>
 

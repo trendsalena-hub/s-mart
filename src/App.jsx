@@ -1,16 +1,15 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-// These paths are standard for a project with App.js in the /src folder
 import { CartProvider } from "./components/context/CartContext.jsx"; 
 import { AuthProvider } from "./components/context/AuthContext.jsx"; 
-import "./App.scss"; // This file also needs to exist in /src
+import "./App.scss";
 
 // Lazy Imports
 const Header = lazy(() => import("./components/Header/Header.jsx"));
 const Footer = lazy(() => import("./components/Footer/Footer.jsx"));
 const InstallPrompt = lazy(() => import("./components/InstallPrompt/InstallPrompt.jsx"));
 
-// FIX: Updated all paths to point inside page-specific folders
+// Page imports - make sure the path is correct
 const pages = {
   Home: lazy(() => import("./pages/Home/Home.jsx")),
   Collections: lazy(() => import("./pages/Collections/Collections.jsx")),
@@ -20,6 +19,7 @@ const pages = {
   Checkout: lazy(() => import("./pages/Checkout/Checkout.jsx")),
   QuickView: lazy(() => import("./pages/QuickView/QuickView.jsx")),
   Login: lazy(() => import("./pages/Login/Login.jsx")),
+  Notifications: lazy(() => import("./pages/Notifications/NotificationsPage.jsx")), // Make sure this path is correct
   Profile: lazy(() => import("./pages/Profile/pages/Profile.jsx")),
   Admin: lazy(() => import("./pages/AdminDashboard/AdminDashboard.jsx")),
   OrderDetails: lazy(() => import("./pages/OrderDetailsPage/OrderDetailsPage.jsx")),
@@ -27,8 +27,6 @@ const pages = {
   ShippingPolicy: lazy(() => import("./pages/ShippingPolicy/ShippingPolicy.jsx")),
   Faq: lazy(() => import("./pages/Faq/FaqPage.jsx")),
   Payment: lazy(() => import("./pages/Payment/PaymentPage.jsx")),
-
-  // === NEW BLOG PAGES ADDED ===
   BlogListing: lazy(() => import("./pages/BlogListing/BlogListingPage.jsx")),
   BlogPost: lazy(() => import("./pages/BlogPost/BlogPostPage.jsx")),
 };
@@ -64,7 +62,7 @@ const Layout = ({ children }) => (
   </>
 );
 
-// === NEW: PaymentLayout (No Header/Footer) ===
+// PaymentLayout (No Header/Footer)
 const PaymentLayout = ({ children }) => (
   <>
     <main className="main-content" style={{paddingTop: 0}}>
@@ -81,7 +79,7 @@ export default function App() {
           <ScrollToTop />
           <Suspense fallback={<Loading />}>
             <Routes>
-              {/* Public */}
+              {/* Public Routes */}
               <Route path="/" element={<Layout><pages.Home /></Layout>} />
               <Route path="/collections" element={<Layout><pages.Collections /></Layout>} />
               <Route path="/contact" element={<Layout><pages.Contact /></Layout>} />
@@ -89,19 +87,21 @@ export default function App() {
               <Route path="/shipping" element={<Layout><pages.ShippingPolicy /></Layout>} />
               <Route path="/faq" element={<Layout><pages.Faq /></Layout>} />
 
-              {/* === NEW BLOG ROUTES === */}
+              {/* Blog Routes */}
               <Route path="/blog" element={<Layout><pages.BlogListing /></Layout>} />
               <Route path="/blog/:slug" element={<Layout><pages.BlogPost /></Layout>} />
 
-              {/* Shop */}
+              {/* Shop Routes */}
               <Route path="/cart" element={<Layout><pages.Cart /></Layout>} />
               <Route path="/checkout" element={<Layout><pages.Checkout /></Layout>} />
               <Route path="/quick-view" element={<Layout><pages.QuickView /></Layout>} />
-              
               <Route path="/payment" element={<PaymentLayout><pages.Payment /></PaymentLayout>} />
 
-              {/* Auth */}
+              {/* Auth Routes */}
               <Route path="/login" element={<Layout><pages.Login /></Layout>} />
+
+              {/* Notifications Route - Make sure this is properly placed */}
+              <Route path="/notifications" element={<Layout><pages.Notifications /></Layout>} />
 
               {/* Order Routes */}
               <Route 
@@ -113,10 +113,10 @@ export default function App() {
                 element={<Layout><pages.OrderTracking /></Layout>} 
               />
 
-              {/* Profile with nested subroutes catching all */}
+              {/* Profile Routes */}
               <Route path="/profile/*" element={<Layout><pages.Profile /></Layout>} />
 
-              {/* Admin with nested subroutes */}
+              {/* Admin Routes */}
               <Route path="/admin/*" element={<Layout><pages.Admin /></Layout>} />
 
               {/* Not Found */}

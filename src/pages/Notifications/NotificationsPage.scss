@@ -1,0 +1,932 @@
+// Variables
+$primary-gold: #e6b325;
+$light-gold: #f8f3e6;
+$lighter-gold: #fdf8ed;
+$gold-gradient: linear-gradient(135deg, #fdf8ed 0%, #f8f3e6 50%, #fdf8ed 100%);
+$gold-highlight: #fff9e6;
+$white: #ffffff;
+$dark-text: #2c3e50;
+$light-text: #7f8c8d;
+$border-color: #ecf0f1;
+$shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+$hover-shadow: 0 6px 20px rgba(230, 179, 37, 0.15);
+$success-color: #27ae60;
+$danger-color: #e74c3c;
+$unread-glow: 0 0 0 2px rgba(230, 179, 37, 0.3);
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin multi-line-truncate($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Notifications Page
+.notifications-page {
+  min-height: 100vh;
+  background: $gold-gradient;
+  padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 15px 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 8px;
+  }
+}
+
+// Header
+.notifications-header {
+  background: $white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: $shadow;
+  border: 1px solid $border-color;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, $primary-gold, #d4af37);
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    h1 {
+      color: $dark-text;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, $primary-gold, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+
+      @media (max-width: 768px) {
+        font-size: 1.75rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 1.5rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+
+      @media (max-width: 768px) {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      @media (max-width: 480px) {
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .notification-stats {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        @media (max-width: 480px) {
+          justify-content: center;
+        }
+
+        .unread-badge {
+          background: linear-gradient(135deg, $primary-gold, #d4af37);
+          color: $white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          box-shadow: 0 2px 8px rgba(230, 179, 37, 0.3);
+
+          @media (max-width: 480px) {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+          }
+        }
+
+        .total-badge {
+          background: $light-gold;
+          color: $dark-text;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          border: 2px solid $primary-gold;
+
+          @media (max-width: 480px) {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+          }
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+
+        @media (max-width: 480px) {
+          justify-content: center;
+        }
+
+        .mark-all-read-btn {
+          background: linear-gradient(135deg, $success-color, #2ecc71);
+          border: none;
+          color: $white;
+          padding: 10px 20px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+
+          @media (max-width: 480px) {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+          }
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+
+        .clear-all-btn {
+          background: linear-gradient(135deg, $danger-color, #c0392b);
+          border: none;
+          color: $white;
+          padding: 10px 20px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+
+          @media (max-width: 480px) {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+          }
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+          }
+
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Container
+.notifications-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Loading State
+.loading-state {
+  @include flex-center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 60px 20px;
+  background: $white;
+  border-radius: 16px;
+  box-shadow: $shadow;
+
+  @media (max-width: 480px) {
+    padding: 40px 20px;
+    border-radius: 12px;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid $light-gold;
+    border-top: 4px solid $primary-gold;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    color: $light-text;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 500;
+
+    @media (max-width: 480px) {
+      font-size: 1rem;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Empty State
+.empty-state {
+  @include flex-center;
+  flex-direction: column;
+  gap: 20px;
+  padding: 80px 20px;
+  background: $white;
+  border-radius: 16px;
+  box-shadow: $shadow;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 60px 20px;
+    border-radius: 12px;
+  }
+
+  .empty-icon {
+    width: 100px;
+    height: 100px;
+    background: $lighter-gold;
+    border-radius: 50%;
+    @include flex-center;
+    border: 4px solid $primary-gold;
+    
+    i {
+      font-size: 2.5rem;
+      color: $primary-gold;
+    }
+
+    @media (max-width: 480px) {
+      width: 80px;
+      height: 80px;
+      
+      i {
+        font-size: 2rem;
+      }
+    }
+  }
+
+  h3 {
+    color: $dark-text;
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+
+    @media (max-width: 480px) {
+      font-size: 1.3rem;
+    }
+  }
+
+  p {
+    color: $light-text;
+    font-size: 1rem;
+    margin: 0;
+    max-width: 300px;
+    line-height: 1.5;
+
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Notification List
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
+}
+
+// Notification Card
+.notification-card {
+  background: $white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: $shadow;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid $border-color;
+
+  // Unread notification styles
+  &.unread {
+    background: $gold-highlight;
+    border: 2px solid $primary-gold;
+    box-shadow: $shadow, $unread-glow;
+    
+    .notification-message {
+      font-weight: 600;
+      color: $dark-text;
+    }
+
+    .notification-content {
+      .notification-header h3 {
+        color: $dark-text;
+        font-weight: 700;
+      }
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(135deg, $primary-gold, #d4af37);
+    }
+  }
+
+  // Read notification styles
+  &.read {
+    opacity: 0.85;
+    background: $white;
+    
+    .notification-message {
+      color: $light-text;
+      font-weight: normal;
+    }
+
+    .notification-content {
+      .notification-header h3 {
+        color: $light-text;
+        font-weight: 600;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 12px;
+    border-radius: 12px;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $hover-shadow;
+    
+    &.unread {
+      box-shadow: $hover-shadow, $unread-glow;
+    }
+  }
+
+  .notification-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+
+    @media (max-width: 480px) {
+      gap: 12px;
+    }
+  }
+
+  .notification-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, $primary-gold, #d4af37);
+    border-radius: 12px;
+    @include flex-center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(230, 179, 37, 0.3);
+
+    @media (max-width: 768px) {
+      width: 50px;
+      height: 50px;
+    }
+
+    @media (max-width: 480px) {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+    }
+
+    i {
+      color: $white;
+      font-size: 1.4rem;
+
+      @media (max-width: 768px) {
+        font-size: 1.2rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .notification-content-wrapper {
+    flex: 1;
+    display: flex;
+    gap: 16px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mobile-image {
+      display: none;
+
+      @media (max-width: 768px) {
+        display: block;
+      }
+
+      .notification-image {
+        width: 70px;
+        height: 70px;
+        border-radius: 10px;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 3px solid $light-gold;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        @media (max-width: 480px) {
+          width: 60px;
+          height: 60px;
+        }
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+
+    .desktop-image {
+      @media (max-width: 768px) {
+        display: none;
+      }
+
+      .notification-image {
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 3px solid $light-gold;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+  }
+
+  .notification-content {
+    flex: 1;
+    min-width: 0;
+
+    .notification-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+
+      @media (max-width: 480px) {
+        margin-bottom: 8px;
+      }
+
+      .header-title {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        h3 {
+          color: $dark-text;
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin: 0;
+          @include truncate;
+          flex: 1;
+
+          @media (max-width: 768px) {
+            font-size: 1.1rem;
+          }
+
+          @media (max-width: 480px) {
+            font-size: 1rem;
+          }
+        }
+
+        .notification-time {
+          color: $light-text;
+          font-size: 0.9rem;
+          white-space: nowrap;
+          flex-shrink: 0;
+          font-weight: 500;
+
+          @media (max-width: 768px) {
+            align-self: flex-start;
+            font-size: 0.85rem;
+          }
+        }
+      }
+
+      .desktop-delete {
+        display: block;
+        flex-shrink: 0;
+
+        @media (max-width: 768px) {
+          display: none;
+        }
+      }
+    }
+
+    .notification-message {
+      color: $dark-text;
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+      font-size: 1rem;
+      font-weight: 500;
+
+      @media (max-width: 480px) {
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+        line-height: 1.4;
+      }
+    }
+
+    // Blog content styles
+    .blog-mini-details {
+      background: $lighter-gold;
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 12px;
+      border-left: 4px solid $primary-gold;
+
+      @media (max-width: 480px) {
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      .blog-description,
+      .blog-message,
+      .blog-excerpt {
+        color: $dark-text;
+        margin: 0;
+        line-height: 1.5;
+        font-size: 0.95rem;
+        
+        @media (max-width: 480px) {
+          font-size: 0.9rem;
+        }
+      }
+
+      .blog-description {
+        font-weight: 500;
+        @include multi-line-truncate(3);
+      }
+
+      .blog-message {
+        font-style: italic;
+        @include multi-line-truncate(2);
+      }
+
+      .blog-excerpt {
+        color: $light-text;
+        @include multi-line-truncate(2);
+      }
+    }
+
+    .product-mini-details,
+    .order-mini-details {
+      background: $lighter-gold;
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 12px;
+      border-left: 4px solid #2ecc71;
+
+      @media (max-width: 480px) {
+        padding: 12px;
+        margin-top: 10px;
+      }
+    }
+
+    .product-mini-details {
+      .product-name {
+        font-weight: 600;
+        color: $dark-text;
+        margin: 0 0 8px 0;
+        @include truncate;
+        font-size: 1rem;
+
+        @media (max-width: 480px) {
+          font-size: 0.95rem;
+        }
+      }
+
+      .product-price {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+
+        span:first-child {
+          color: $dark-text;
+          font-weight: 700;
+          font-size: 1rem;
+
+          @media (max-width: 480px) {
+            font-size: 0.95rem;
+          }
+        }
+
+        .offer-badge {
+          background: linear-gradient(135deg, $primary-gold, #d4af37);
+          color: $white;
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          box-shadow: 0 2px 4px rgba(230, 179, 37, 0.3);
+
+          @media (max-width: 480px) {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+          }
+        }
+      }
+    }
+
+    .order-mini-details {
+      .order-product,
+      .order-quantity,
+      .order-id {
+        margin: 6px 0;
+        color: $dark-text;
+        font-size: 0.95rem;
+        line-height: 1.4;
+
+        @media (max-width: 480px) {
+          font-size: 0.9rem;
+          margin: 4px 0;
+        }
+      }
+
+      .order-id {
+        font-family: 'Courier New', monospace;
+        background: rgba($primary-gold, 0.1);
+        padding: 6px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        font-weight: 600;
+      }
+    }
+  }
+
+  // Delete buttons
+  .delete-btn {
+    background: rgba(231, 76, 60, 0.1);
+    border: 2px solid rgba(231, 76, 60, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    @include flex-center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(231, 76, 60, 0.2);
+      border-color: rgba(231, 76, 60, 0.4);
+      transform: scale(1.1);
+    }
+
+    &.deleting {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    i {
+      color: #e74c3c;
+    }
+
+    .delete-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top: 2px solid #e74c3c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    // Desktop delete button (inside header)
+    &.desktop-delete {
+      width: 36px;
+      height: 36px;
+      opacity: 0;
+      
+      i {
+        font-size: 1rem;
+      }
+    }
+
+    // Mobile delete button (fixed position)
+    &.mobile-delete {
+      display: none;
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      opacity: 1;
+      
+      i {
+        font-size: 1.1rem;
+      }
+
+      @media (max-width: 768px) {
+        display: flex;
+      }
+
+      @media (max-width: 480px) {
+        width: 36px;
+        height: 36px;
+        top: 14px;
+        right: 14px;
+        
+        i {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+
+  &:hover .desktop-delete {
+    opacity: 1;
+  }
+
+  .unread-indicator {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 12px;
+    height: 12px;
+    background: $primary-gold;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px $gold-highlight;
+    animation: pulse 2s infinite;
+
+    @media (max-width: 480px) {
+      top: 16px;
+      left: 16px;
+      width: 10px;
+      height: 10px;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 179, 37, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(230, 179, 37, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 179, 37, 0);
+  }
+}
+
+// Animation for new notifications
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-card {
+  animation: slideIn 0.3s ease;
+}
+
+// Mobile-specific optimizations
+@media (max-width: 480px) {
+  .notifications-page {
+    padding: 8px 6px;
+  }
+
+  .notification-card {
+    padding: 12px 10px;
+    
+    .notification-main {
+      gap: 10px;
+    }
+
+    .notification-icon {
+      width: 40px;
+      height: 40px;
+      
+      i {
+        font-size: 1rem;
+      }
+    }
+
+    .notification-content-wrapper {
+      gap: 10px;
+    }
+  }
+}
+
+// Very small devices
+@media (max-width: 360px) {
+  .notifications-header {
+    .header-content {
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+  }
+
+  .notification-card {
+    padding: 10px 8px;
+    
+    .notification-main {
+      gap: 8px;
+    }
+
+    .notification-icon {
+      width: 36px;
+      height: 36px;
+      
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}

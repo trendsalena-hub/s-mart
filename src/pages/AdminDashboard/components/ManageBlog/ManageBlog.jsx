@@ -6,89 +6,97 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../../../firebase/config.js';
-import './ManageBlog.scss';
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../../../firebase/config.js";
+import "./ManageBlog.scss";
 
 const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
   const [editingPost, setEditingPost] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('content');
-  
+  const [activeTab, setActiveTab] = useState("content");
+
   const [form, setForm] = useState({
-    title: '',
-    slug: '',
-    author: 'Admin',
-    featureImage: '',
-    excerpt: '',
-    content: '',
-    status: 'draft',
-    category: 'general',
-    tags: '', // Keep as string in form state
-    readTime: '',
-    metaTitle: '',
-    metaDescription: '',
+    title: "",
+    slug: "",
+    author: "Admin",
+    featureImage: "",
+    excerpt: "",
+    content: "",
+    status: "draft",
+    category: "general",
+    tags: "", // string in form, array in Firestore
+    readTime: "",
+    metaTitle: "",
+    metaDescription: "",
   });
 
   const [contentImages, setContentImages] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Effect to populate form when an existing post is clicked for editing
+  // -------------------------------------------------------------------
+  // Populate form when editing a post
+  // -------------------------------------------------------------------
   useEffect(() => {
     if (editingPost) {
       setForm({
-        title: editingPost.title || '',
-        slug: editingPost.slug || '',
-        author: editingPost.author || 'Admin',
-        featureImage: editingPost.featureImage || '',
-        excerpt: editingPost.excerpt || '',
-        content: editingPost.content || '',
-        status: editingPost.status || 'draft',
-        category: editingPost.category || 'general',
-        // Convert array back to string for the form
-        tags: Array.isArray(editingPost.tags) ? editingPost.tags.join(', ') : editingPost.tags || '',
-        readTime: editingPost.readTime || '',
-        metaTitle: editingPost.metaTitle || '',
-        metaDescription: editingPost.metaDescription || '',
+        title: editingPost.title || "",
+        slug: editingPost.slug || "",
+        author: editingPost.author || "Admin",
+        featureImage: editingPost.featureImage || "",
+        excerpt: editingPost.excerpt || "",
+        content: editingPost.content || "",
+        status: editingPost.status || "draft",
+        category: editingPost.category || "general",
+        tags: Array.isArray(editingPost.tags)
+          ? editingPost.tags.join(", ")
+          : editingPost.tags || "",
+        readTime: editingPost.readTime || "",
+        metaTitle: editingPost.metaTitle || "",
+        metaDescription: editingPost.metaDescription || "",
       });
       setContentImages(editingPost.contentImages || []);
     } else {
       resetForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPost]);
 
-  // Handle simple text/select changes
+  // -------------------------------------------------------------------
+  // Input change handler
+  // -------------------------------------------------------------------
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let newSlug = form.slug;
-    
+
     // Auto-generate slug from title if slug is empty
-    if (name === 'title' && !form.slug) {
+    if (name === "title" && !form.slug) {
       newSlug = value
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w-]+/g, '')
-        .replace(/--+/g, '-');
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]+/g, "")
+        .replace(/--+/g, "-");
     }
 
-    // Auto-calculate read time
-    if (name === 'content' && !form.readTime) {
-      const wordCount = value.trim().split(/\s+/).length;
-      const readTime = Math.ceil(wordCount / 200);
-      setForm(prev => ({ ...prev, readTime: readTime.toString() }));
+    // Auto-calculate read time from content
+    if (name === "content" && !form.readTime) {
+      const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+      const readTime = Math.max(1, Math.ceil(wordCount / 200));
+      setForm((prev) => ({ ...prev, readTime: readTime.toString() }));
     }
-    
+
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      slug: name === 'title' ? newSlug : form.slug,
+      slug: name === "title" ? newSlug : prev.slug,
     }));
   };
 
-  // Handle manual slug changes
+  // -------------------------------------------------------------------
+  // Slug input handler (manual)
+  // -------------------------------------------------------------------
   const handleSlugChange = (e) => {
     const { value } = e.target;
     setForm((prev) => ({
@@ -96,44 +104,45 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
       slug: value
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w-]+/g, '')
-        .replace(/--+/g, '-'),
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]+/g, "")
+        .replace(/--+/g, "-"),
     }));
   };
 
-  // Handle feature image upload
+  // -------------------------------------------------------------------
+  // Feature image upload
+  // -------------------------------------------------------------------
   const handleFeatureImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      onError('Please select a valid image file.');
+    if (!file.type.startsWith("image/")) {
+      onError("Please select a valid image file.");
       return;
     }
 
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      onError('Image size should be less than 5MB.');
+      onError("Image size should be less than 5MB.");
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
+
     try {
-      const storageRef = ref(storage, `blog/featureImages/${Date.now()}_${file.name}`);
-      
-      // Simulate upload progress
+      const storageRef = ref(
+        storage,
+        `blog/featureImages/${Date.now()}_${file.name}`
+      );
+
       const uploadTask = uploadBytes(storageRef, file);
-      uploadTask.then(() => {
-        setUploadProgress(100);
-      });
-      
+      uploadTask.then(() => setUploadProgress(100));
+
       await uploadTask;
       const downloadURL = await getDownloadURL(storageRef);
-      setForm(prev => ({ ...prev, featureImage: downloadURL }));
-      onSuccess('Feature image uploaded successfully!');
+      setForm((prev) => ({ ...prev, featureImage: downloadURL }));
+      onSuccess("Feature image uploaded successfully!");
     } catch (err) {
       console.error("Feature image upload failed:", err);
       onError("Failed to upload feature image.");
@@ -143,37 +152,42 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
     }
   };
 
-  // Handle multiple content images upload
+  // -------------------------------------------------------------------
+  // Content images upload
+  // -------------------------------------------------------------------
   const handleContentImagesUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    // Filter valid image files
-    const validFiles = files.filter(file => 
-      file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024
+    const validFiles = files.filter(
+      (file) => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024
     );
 
-    if (validFiles.length === 0) {
-      onError('Please select valid image files (max 5MB each).');
+    if (!validFiles.length) {
+      onError("Please select valid image files (max 5MB each).");
       return;
     }
 
     setIsUploading(true);
+
     try {
       const uploadPromises = validFiles.map(async (file) => {
-        const storageRef = ref(storage, `blog/contentImages/${Date.now()}_${file.name}`);
+        const storageRef = ref(
+          storage,
+          `blog/contentImages/${Date.now()}_${file.name}`
+        );
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
         return {
           id: Date.now() + Math.random(),
           url: downloadURL,
           alt: file.name.replace(/\.[^/.]+$/, ""),
-          caption: ''
+          caption: "",
         };
       });
 
       const newImages = await Promise.all(uploadPromises);
-      setContentImages(prev => [...prev, ...newImages]);
+      setContentImages((prev) => [...prev, ...newImages]);
       onSuccess(`${newImages.length} image(s) uploaded successfully!`);
     } catch (err) {
       console.error("Content images upload failed:", err);
@@ -183,186 +197,270 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
     }
   };
 
-  // Remove content image
   const removeContentImage = (imageId) => {
-    setContentImages(prev => prev.filter(img => img.id !== imageId));
+    setContentImages((prev) => prev.filter((img) => img.id !== imageId));
   };
 
-  // Update image caption
   const updateImageCaption = (imageId, caption) => {
-    setContentImages(prev => 
-      prev.map(img => 
-        img.id === imageId ? { ...img, caption } : img
-      )
+    setContentImages((prev) =>
+      prev.map((img) => (img.id === imageId ? { ...img, caption } : img))
     );
   };
 
-  // Insert image into content at cursor position
-  const insertImageIntoContent = (imageUrl, altText = '') => {
-    const textarea = document.getElementById('content');
+  const insertImageIntoContent = (imageUrl, altText = "") => {
+    const textarea = document.getElementById("content");
+    if (!textarea) return;
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const imageMarkdown = `![${altText}](${imageUrl})`;
-    
-    const newContent = 
-      form.content.substring(0, start) + 
-      imageMarkdown + 
+
+    const newContent =
+      form.content.substring(0, start) +
+      imageMarkdown +
       form.content.substring(end);
-    
-    setForm(prev => ({ ...prev, content: newContent }));
-    
-    // Focus back on textarea
+
+    setForm((prev) => ({ ...prev, content: newContent }));
+
     setTimeout(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length);
+      textarea.setSelectionRange(
+        start + imageMarkdown.length,
+        start + imageMarkdown.length
+      );
     }, 0);
   };
 
-  // Add image gallery to content
   const insertImageGallery = () => {
-    if (contentImages.length === 0) {
-      onError('No images available to create gallery.');
+    if (!contentImages.length) {
+      onError("No images available to create gallery.");
       return;
     }
 
-    const galleryMarkdown = '\n\n' + contentImages.map(img => 
-      `![${img.alt || 'Gallery image'}](${img.url})`
-    ).join('\n\n') + '\n\n';
+    const galleryMarkdown =
+      "\n\n" +
+      contentImages
+        .map(
+          (img) => `![${img.alt || "Gallery image"}](${img.url})`
+        )
+        .join("\n\n") +
+      "\n\n";
 
-    setForm(prev => ({ 
-      ...prev, 
-      content: prev.content + galleryMarkdown 
+    setForm((prev) => ({
+      ...prev,
+      content: prev.content + galleryMarkdown,
     }));
   };
 
   const resetForm = () => {
     setForm({
-      title: '',
-      slug: '',
-      author: 'Admin',
-      featureImage: '',
-      excerpt: '',
-      content: '',
-      status: 'draft',
-      category: 'general',
-      tags: '',
-      readTime: '',
-      metaTitle: '',
-      metaDescription: '',
+      title: "",
+      slug: "",
+      author: "Admin",
+      featureImage: "",
+      excerpt: "",
+      content: "",
+      status: "draft",
+      category: "general",
+      tags: "",
+      readTime: "",
+      metaTitle: "",
+      metaDescription: "",
     });
     setContentImages([]);
     setEditingPost(null);
-    setActiveTab('content');
+    setActiveTab("content");
   };
 
-  // Handle form submission
+  // -------------------------------------------------------------------
+  // SAVE BLOG + NOTIFICATION
+  // -------------------------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
+
     if (!form.title || !form.slug || !form.content || !form.excerpt) {
-      onError('Please fill in all required fields: Title, Slug, Excerpt, and Content.');
+      onError(
+        "Please fill in all required fields: Title, Slug, Excerpt, and Content."
+      );
       return;
     }
 
     if (!form.featureImage) {
-      onError('Please upload a feature image.');
+      onError("Please upload a feature image.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
-      // Convert tags from string to array
-      const tagsArray = form.tags 
-        ? form.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      const tagsArray = form.tags
+        ? form.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag)
         : [];
 
       const postData = {
         ...form,
-        contentImages: contentImages,
-        tags: tagsArray, // Store as array in Firestore
+        contentImages,
+        tags: tagsArray,
         updatedAt: serverTimestamp(),
       };
 
+      // -------------------------------------------------
+      // 1️⃣ EDIT EXISTING POST
+      // -------------------------------------------------
       if (editingPost) {
-        // Update existing post
-        const postRef = doc(db, 'blogPosts', editingPost.id);
+        const postRef = doc(db, "blogPosts", editingPost.id);
         await updateDoc(postRef, postData);
-        onSuccess('Blog post updated successfully!');
+
+        // If status is published, send a "blog updated/published" notification
+        if (form.status === "published") {
+          await addDoc(collection(db, "notifications"), {
+            type: "blog",
+            title: form.title,
+            message:
+              form.excerpt.length > 120
+                ? form.excerpt.substring(0, 120) + "..."
+                : form.excerpt,
+            image: form.featureImage,
+            blog: {
+              title: form.title,
+              excerpt: form.excerpt,
+              image: form.featureImage,
+            },
+            slug: form.slug,
+            docId: editingPost.id,
+            collection: "blogPosts",
+            createdAt: serverTimestamp(),
+            isRead: false,
+          });
+        }
+
+        onSuccess("Blog post updated successfully!");
+
       } else {
-        // Add new post
-        await addDoc(collection(db, 'blogPosts'), {
+        // -------------------------------------------------
+        // 2️⃣ CREATE NEW POST
+        // -------------------------------------------------
+        const newBlogRef = await addDoc(collection(db, "blogPosts"), {
           ...postData,
           createdAt: serverTimestamp(),
           views: 0,
           likes: 0,
         });
-        onSuccess('Blog post created successfully!');
+
+        // Only send notification if it's published
+        if (form.status === "published") {
+          await addDoc(collection(db, "notifications"), {
+            type: "blog",
+            title: form.title,
+            message:
+              form.excerpt.length > 120
+                ? form.excerpt.substring(0, 120) + "..."
+                : form.excerpt,
+            image: form.featureImage,
+            blog: {
+              title: form.title,
+              excerpt: form.excerpt,
+              image: form.featureImage,
+            },
+            docId: newBlogRef.id,
+            slug: form.slug,
+            collection: "blogPosts",
+            createdAt: serverTimestamp(),
+            isRead: false,
+          });
+        }
+
+        onSuccess("Blog post created successfully!");
       }
+
       resetForm();
       onRefresh();
     } catch (err) {
-      console.error('Error saving post:', err);
-      onError('Failed to save blog post. Please try again.');
+      console.error("Error saving post:", err);
+      onError("Failed to save blog post. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle post deletion
+  // -------------------------------------------------------------------
+  // DELETE POST
+  // -------------------------------------------------------------------
   const handleDelete = async (postId) => {
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this post? This action cannot be undone."
+      )
+    )
+      return;
+
     try {
-      await deleteDoc(doc(db, 'blogPosts', postId));
-      onSuccess('Blog post deleted successfully.');
+      await deleteDoc(doc(db, "blogPosts", postId));
+      onSuccess("Blog post deleted successfully.");
       onRefresh();
     } catch (err) {
-      onError('Failed to delete blog post.');
+      console.error(err);
+      onError("Failed to delete blog post.");
     }
   };
 
-  // Toggle post status
+  // -------------------------------------------------------------------
+  // TOGGLE PUBLISH STATUS (NO NOTIFICATION HERE TO KEEP SIMPLE)
+  // -------------------------------------------------------------------
   const toggleStatus = async (post) => {
     try {
-      const postRef = doc(db, 'blogPosts', post.id);
+      const postRef = doc(db, "blogPosts", post.id);
       await updateDoc(postRef, {
-        status: post.status === 'published' ? 'draft' : 'published',
+        status: post.status === "published" ? "draft" : "published",
         updatedAt: serverTimestamp(),
       });
-      onSuccess(`Post ${post.status === 'published' ? 'unpublished' : 'published'}!`);
+      onSuccess(
+        `Post ${
+          post.status === "published" ? "unpublished" : "published"
+        }!`
+      );
       onRefresh();
     } catch (err) {
-      onError('Failed to update post status.');
+      console.error(err);
+      onError("Failed to update post status.");
     }
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp.seconds * 1000).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!timestamp) return "N/A";
+    const d =
+      timestamp?.toDate?.() || new Date(timestamp.seconds * 1000 || timestamp);
+    return d.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      published: { class: 'published', label: 'Published' },
-      draft: { class: 'draft', label: 'Draft' }
+      published: { class: "published", label: "Published" },
+      draft: { class: "draft", label: "Draft" },
     };
     return statusConfig[status] || statusConfig.draft;
   };
 
+  // -------------------------------------------------------------------
+  // RENDER
+  // -------------------------------------------------------------------
   return (
     <div className="manage-blog">
       {/* Form Section */}
       <div className="blog-form-card">
         <div className="card-header">
-          <h3>{editingPost ? 'Edit Blog Post' : 'Create New Blog Post'}</h3>
+          <h3>{editingPost ? "Edit Blog Post" : "Create New Blog Post"}</h3>
           {editingPost && (
-            <button 
+            <button
               className="btn btn--secondary btn--sm"
               onClick={resetForm}
             >
@@ -373,28 +471,30 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="blog-form">
-          {/* Basic Information Tab */}
+          {/* Tabs */}
           <div className="form-tabs">
-            <button 
+            <button
               type="button"
-              className={`tab-btn ${activeTab === 'content' ? 'active' : ''}`}
-              onClick={() => setActiveTab('content')}
+              className={`tab-btn ${
+                activeTab === "content" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("content")}
             >
               <i className="fas fa-edit"></i>
               Content
             </button>
-            <button 
+            <button
               type="button"
-              className={`tab-btn ${activeTab === 'seo' ? 'active' : ''}`}
-              onClick={() => setActiveTab('seo')}
+              className={`tab-btn ${activeTab === "seo" ? "active" : ""}`}
+              onClick={() => setActiveTab("seo")}
             >
               <i className="fas fa-search"></i>
               SEO
             </button>
-            <button 
+            <button
               type="button"
-              className={`tab-btn ${activeTab === 'images' ? 'active' : ''}`}
-              onClick={() => setActiveTab('images')}
+              className={`tab-btn ${activeTab === "images" ? "active" : ""}`}
+              onClick={() => setActiveTab("images")}
             >
               <i className="fas fa-images"></i>
               Media
@@ -402,8 +502,8 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
           </div>
 
           <div className="tab-content">
-            {/* Content Tab */}
-            {activeTab === 'content' && (
+            {/* CONTENT TAB */}
+            {activeTab === "content" && (
               <div className="tab-pane active">
                 <div className="form-row">
                   <div className="form-group">
@@ -491,17 +591,21 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                   ></textarea>
                   <div className="editor-tools">
                     <span className="word-count">
-                      {form.content.trim() ? form.content.trim().split(/\s+/).length : 0} words
+                      {form.content.trim()
+                        ? form.content.trim().split(/\s+/).length
+                        : 0}{" "}
+                      words
                     </span>
                     <div className="tool-buttons">
+                      {/* You can add buttons for bold/italic etc later */}
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* SEO Tab */}
-            {activeTab === 'seo' && (
+            {/* SEO TAB */}
+            {activeTab === "seo" && (
               <div className="tab-pane active">
                 <div className="form-group">
                   <label htmlFor="metaTitle">Meta Title</label>
@@ -526,7 +630,9 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                     onChange={handleInputChange}
                     placeholder="SEO description for search engines"
                   ></textarea>
-                  <div className="char-count">{form.metaDescription.length}/160</div>
+                  <div className="char-count">
+                    {form.metaDescription.length}/160
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -540,7 +646,8 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                     placeholder="tag1, tag2, tag3 (comma separated)"
                   />
                   <div className="field-help">
-                    Separate tags with commas. Example: "fashion, spring trends, 2024"
+                    Separate tags with commas. Example: "fashion, spring
+                    trends, 2024"
                   </div>
                 </div>
 
@@ -572,8 +679,8 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
               </div>
             )}
 
-            {/* Images Tab */}
-            {activeTab === 'images' && (
+            {/* IMAGES TAB */}
+            {activeTab === "images" && (
               <div className="tab-pane active">
                 {/* Feature Image */}
                 <div className="image-upload-section">
@@ -581,11 +688,19 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                   <div className="image-upload-preview">
                     {form.featureImage ? (
                       <div className="preview-with-actions">
-                        <img src={form.featureImage} alt="Feature preview" />
-                        <button 
-                          type="button" 
+                        <img
+                          src={form.featureImage}
+                          alt="Feature preview"
+                        />
+                        <button
+                          type="button"
                           className="btn-remove"
-                          onClick={() => setForm(prev => ({ ...prev, featureImage: '' }))}
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              featureImage: "",
+                            }))
+                          }
                         >
                           <i className="fas fa-times"></i>
                         </button>
@@ -606,8 +721,8 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                     />
                     {isUploading && (
                       <div className="upload-progress">
-                        <div 
-                          className="progress-bar" 
+                        <div
+                          className="progress-bar"
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
                         <span>Uploading... {uploadProgress}%</span>
@@ -629,7 +744,10 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                         onChange={handleContentImagesUpload}
                         disabled={isUploading}
                       />
-                      <label htmlFor="contentImages" className="btn btn--primary btn--sm">
+                      <label
+                        htmlFor="contentImages"
+                        className="btn btn--primary btn--sm"
+                      >
                         <i className="fas fa-plus"></i>
                         Add Images
                       </label>
@@ -639,13 +757,21 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                   {contentImages.length > 0 ? (
                     <div className="content-images-grid">
                       {contentImages.map((image) => (
-                        <div key={image.id} className="content-image-item">
+                        <div
+                          key={image.id}
+                          className="content-image-item"
+                        >
                           <img src={image.url} alt={image.alt} />
                           <div className="image-actions">
                             <button
                               type="button"
                               className="btn-insert"
-                              onClick={() => insertImageIntoContent(image.url, image.alt)}
+                              onClick={() =>
+                                insertImageIntoContent(
+                                  image.url,
+                                  image.alt
+                                )
+                              }
                             >
                               <i className="fas fa-plus"></i>
                               Insert
@@ -653,7 +779,9 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                             <button
                               type="button"
                               className="btn-remove"
-                              onClick={() => removeContentImage(image.id)}
+                              onClick={() =>
+                                removeContentImage(image.id)
+                              }
                             >
                               <i className="fas fa-trash"></i>
                             </button>
@@ -662,7 +790,12 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                             type="text"
                             placeholder="Image caption..."
                             value={image.caption}
-                            onChange={(e) => updateImageCaption(image.id, e.target.value)}
+                            onChange={(e) =>
+                              updateImageCaption(
+                                image.id,
+                                e.target.value
+                              )
+                            }
                             className="image-caption"
                           />
                         </div>
@@ -690,16 +823,20 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
               {isSubmitting ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>
-                  {editingPost ? 'Updating...' : 'Publishing...'}
+                  {editingPost ? "Updating..." : "Publishing..."}
                 </>
               ) : (
                 <>
-                  <i className={`fas ${editingPost ? 'fa-save' : 'fa-paper-plane'}`}></i>
-                  {editingPost ? 'Update Post' : 'Publish Post'}
+                  <i
+                    className={`fas ${
+                      editingPost ? "fa-save" : "fa-paper-plane"
+                    }`}
+                  ></i>
+                  {editingPost ? "Update Post" : "Publish Post"}
                 </>
               )}
             </button>
-            
+
             {editingPost && (
               <button
                 type="button"
@@ -720,8 +857,9 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
           <h3>Blog Posts ({posts.length})</h3>
           <div className="list-controls">
             <span className="stats">
-              {posts.filter(p => p.status === 'published').length} published, 
-              {posts.filter(p => p.status === 'draft').length} draft
+              {posts.filter((p) => p.status === "published").length}{" "}
+              published,{" "}
+              {posts.filter((p) => p.status === "draft").length} draft
             </span>
           </div>
         </div>
@@ -741,21 +879,23 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
           </div>
         ) : (
           <div className="blog-list">
-            {posts.map(post => {
+            {posts.map((post) => {
               const status = getStatusBadge(post.status);
               return (
                 <div key={post.id} className="blog-list-item">
                   <div className="post-image">
                     <img src={post.featureImage} alt={post.title} />
-                    <span className={`status-badge status--${status.class}`}>
+                    <span
+                      className={`status-badge status--${status.class}`}
+                    >
                       {status.label}
                     </span>
                   </div>
-                  
+
                   <div className="post-content">
                     <h4 className="post-title">{post.title}</h4>
                     <p className="post-excerpt">{post.excerpt}</p>
-                    
+
                     <div className="post-meta">
                       <span className="meta-item">
                         <i className="fas fa-user"></i>
@@ -763,7 +903,7 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                       </span>
                       <span className="meta-item">
                         <i className="fas fa-clock"></i>
-                        {post.readTime || '5'} min read
+                        {post.readTime || "5"} min read
                       </span>
                       <span className="meta-item">
                         <i className="fas fa-calendar"></i>
@@ -780,30 +920,46 @@ const ManageBlog = ({ posts, loading, onRefresh, onSuccess, onError }) => {
                     {post.tags && post.tags.length > 0 && (
                       <div className="post-tags">
                         {post.tags.slice(0, 3).map((tag, index) => (
-                          <span key={index} className="tag-pill">{tag}</span>
+                          <span key={index} className="tag-pill">
+                            {tag}
+                          </span>
                         ))}
                         {post.tags.length > 3 && (
-                          <span className="tag-more">+{post.tags.length - 3} more</span>
+                          <span className="tag-more">
+                            +{post.tags.length - 3} more
+                          </span>
                         )}
                       </div>
                     )}
 
                     <div className="post-actions">
-                      <button 
+                      <button
                         className="btn-action btn-edit"
                         onClick={() => setEditingPost(post)}
                       >
                         <i className="fas fa-edit"></i>
                         Edit
                       </button>
-                      <button 
-                        className={`btn-action btn-status ${post.status === 'published' ? 'btn-unpublish' : 'btn-publish'}`}
+                      <button
+                        className={`btn-action btn-status ${
+                          post.status === "published"
+                            ? "btn-unpublish"
+                            : "btn-publish"
+                        }`}
                         onClick={() => toggleStatus(post)}
                       >
-                        <i className={`fas ${post.status === 'published' ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                        {post.status === 'published' ? 'Unpublish' : 'Publish'}
+                        <i
+                          className={`fas ${
+                            post.status === "published"
+                              ? "fa-eye-slash"
+                              : "fa-eye"
+                          }`}
+                        ></i>
+                        {post.status === "published"
+                          ? "Unpublish"
+                          : "Publish"}
                       </button>
-                      <button 
+                      <button
                         className="btn-action btn-delete"
                         onClick={() => handleDelete(post.id)}
                       >

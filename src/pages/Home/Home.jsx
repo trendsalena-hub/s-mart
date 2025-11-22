@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useCart } from '../../components/context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import { Link } from 'react-router-dom';
 import './Home.scss';
 
 const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -19,6 +20,8 @@ const Home = () => {
   const [dbBanners, setDbBanners] = useState([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loadedSlides, setLoadedSlides] = useState({});
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [blogLoading, setBlogLoading] = useState(true);
   const sliderInterval = useRef(null);
   const videoRefs = useRef([]);
 
@@ -27,7 +30,7 @@ const Home = () => {
       type: 'image', 
       url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=400&fit=crop',
       duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
+      placeholder: 'linear-gradient(135deg, #f8f5f0 0%, #e8e0d5 100%)',
       title: 'Premium Collection',
       subtitle: 'Discover our exclusive range of products'
     },
@@ -35,17 +38,9 @@ const Home = () => {
       type: 'image', 
       url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&h=400&fit=crop',
       duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
+      placeholder: 'linear-gradient(135deg, #f8f5f0 0%, #e8e0d5 100%)',
       title: 'Summer Sale',
       subtitle: 'Up to 50% off on selected items'
-    },
-    { 
-      type: 'image', 
-      url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&h=400&fit=crop',
-      duration: 5000,
-      placeholder: 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)',
-      title: 'New Arrivals',
-      subtitle: 'Fresh styles just for you'
     }
   ];
 
@@ -61,7 +56,7 @@ const Home = () => {
             ...b, 
             type: b.type || 'image',
             duration: b.duration || 5000,
-            placeholder: b.placeholder || 'linear-gradient(135deg, #f5f7fa 0%, #e4e5e6 100%)'
+            placeholder: b.placeholder || 'linear-gradient(135deg, #f8f5f0 0%, #e8e0d5 100%)'
           })));
           return;
         }
@@ -77,7 +72,7 @@ const Home = () => {
     setError('');
     try {
       const productsRef = collection(db, 'products');
-      const q = query(productsRef, orderBy('createdAt', 'desc'));
+      const q = query(productsRef, orderBy('createdAt', 'desc'), limit(8));
       const querySnapshot = await getDocs(q);
       const productsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -85,14 +80,35 @@ const Home = () => {
         createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.seconds ? doc.data().createdAt.seconds * 1000 : doc.data().createdAt) : new Date(0)
       }));
       
-      // Simulate loading for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       await preloadProductImages(productsData);
       setProducts(productsData);
     } catch (err) {
       setError('Failed to load products. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBlogPosts = async () => {
+    setBlogLoading(true);
+    try {
+      const postsRef = collection(db, 'blogPosts');
+      const q = query(
+        postsRef, 
+        orderBy('createdAt', 'desc'), 
+        limit(3)
+      );
+      const querySnapshot = await getDocs(q);
+      const postsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBlogPosts(postsData);
+    } catch (err) {
+      console.error("Error loading blog posts:", err);
+    } finally {
+      setBlogLoading(false);
     }
   };
 
@@ -133,7 +149,7 @@ const Home = () => {
     setTimeout(() => {
       setCurrentSlide(index);
       setIsTransitioning(false);
-    }, 500);
+    }, 400);
   };
 
   const handleVideoEnd = () => {
@@ -175,6 +191,7 @@ const Home = () => {
     setIsVisible(true);
     loadProductsFromFirebase();
     loadBannersFromFirebase();
+    loadBlogPosts();
   }, []);
 
   useEffect(() => {
@@ -197,15 +214,6 @@ const Home = () => {
     };
   }, [banners, currentSlide]);
 
-  const now = Date.now();
-  const newArrivals = products.filter(p =>
-    p.createdAt && (now - new Date(p.createdAt).getTime()) < MS_PER_WEEK
-  );
-  
-  const collections = products.filter(p =>
-    !(p.createdAt && (now - new Date(p.createdAt).getTime()) < MS_PER_WEEK)
-  );
-
   const showAddToCartNotification = (productTitle) => {
     setNotificationMessage(`${productTitle} added to cart!`);
     setShowNotification(true);
@@ -223,6 +231,16 @@ const Home = () => {
 
   const prevSlide = () => {
     goToSlide((currentSlide - 1 + banners.length) % banners.length);
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   return (
@@ -270,8 +288,8 @@ const Home = () => {
           </div>
         )}
 
-        {/* Hero Section with Reduced Height */}
-        <section className="hero">
+        {/* Compact Hero Section */}
+        <section className="hero hero--compact">
           <div className="hero__slider-container">
             <div className="hero__slider">
               {banners.map((slide, idx) => (
@@ -304,6 +322,10 @@ const Home = () => {
                         className={`hero__slide-image ${loadedSlides[idx] ? 'hero__slide-image--loaded' : ''}`}
                         style={{ backgroundImage: `url(${slide.url})` }}
                       />
+                      <div className="hero__slide-content">
+                        <h2 className="hero__slide-title">{slide.title}</h2>
+                        <p className="hero__slide-subtitle">{slide.subtitle}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -334,26 +356,6 @@ const Home = () => {
                 ))}
               </div>
             )}
-
-            {/* Navigation Buttons */}
-            {banners.length > 1 && (
-              <>
-                <button 
-                  className="hero__nav-btn hero__nav-btn--prev"
-                  onClick={prevSlide}
-                  aria-label="Previous slide"
-                >
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-                <button 
-                  className="hero__nav-btn hero__nav-btn--next"
-                  onClick={nextSlide}
-                  aria-label="Next slide"
-                >
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-              </>
-            )}
           </div>
         </section>
 
@@ -374,109 +376,136 @@ const Home = () => {
           </section>
         )}
 
-        {/* Products Section */}
-        {!loading && (
-          <>
-            {newArrivals.length > 0 && (
-              <section className="section section--premium">
-                <div className="container">
-                  <div className="section__header">
-                    <div className="section__badge">New This Week</div>
-                    <h2 className="section__title">New Arrivals</h2>
-                    <p className="section__subtitle">
-                      Fresh styles just landed in our collection
-                    </p>
-                    <div className="section__decorative">
-                      <div className="decorative-line"></div>
-                      <div className="decorative-dot"></div>
-                      <div className="decorative-line"></div>
-                    </div>
-                  </div>
-                  <div className="product-grid">
-                    {newArrivals.map((product, index) => (
-                      <div 
-                        key={product.id} 
-                        className="product-card-wrapper"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                      >
-                        <ProductCard
-                          id={product.id}
-                          image={product.image}
-                          images={product.images}
-                          title={product.title}
-                          price={product.price}
-                          originalPrice={product.originalPrice}
-                          discount={product.discount}
-                          badge={product.badge || 'New'}
-                          category={product.category}
-                          stock={product.stock}
-                          material={product.material}
-                          brand={product.brand}
-                          offer={product.offer}
-                          onAddToCart={() => handleAddToCart(product)}
-                        />
-                      </div>
-                    ))}
-                  </div>
+        {/* Unified Products Section */}
+        {!loading && products.length > 0 && (
+          <section className="section section--unified">
+            <div className="container">
+              <div className="section__header">
+                <p className="section__subtitle">
+                  Discover our handpicked selection of premium fashion items
+                </p>
+                <div className="section__decorative">
+                  <div className="decorative-line"></div>
+                  <div className="decorative-dot"></div>
+                  <div className="decorative-line"></div>
                 </div>
-              </section>
+              </div>
+              <div className="product-grid product-grid--compact">
+                {products.map((product, index) => (
+                  <div 
+                    key={product.id} 
+                    className="product-card-wrapper"
+                    style={{ animationDelay: `${index * 0.08}s` }}
+                  >
+                    <ProductCard
+                      id={product.id}
+                      image={product.image}
+                      images={product.images}
+                      title={product.title}
+                      price={product.price}
+                      originalPrice={product.originalPrice}
+                      discount={product.discount}
+                      badge={product.badge}
+                      category={product.category}
+                      stock={product.stock}
+                      material={product.material}
+                      brand={product.brand}
+                      offer={product.offer}
+                      onAddToCart={() => handleAddToCart(product)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Blog Section */}
+        <section className="section section--blog">
+          <div className="container-blog">
+            <div className="section__header">
+              <h2 className="section__title">From Our Blogs</h2>
+              <p className="section__subtitle">
+                Discover fashion tips, trends, and style inspiration
+              </p>
+              <div className="section__decorative">
+                <div className="decorative-line"></div>
+                <div className="decorative-dot"></div>
+                <div className="decorative-line"></div>
+              </div>
+            </div>
+
+            {blogLoading ? (
+              <div className="blog-loading">
+                <div className="blog-loader">
+                  <div className="loader-spinner"></div>
+                  <p>Loading articles...</p>
+                </div>
+              </div>
+            ) : blogPosts.length > 0 ? (
+              <div className="blog-grid blog-grid--home">
+                {blogPosts.map((post, index) => (
+                  <article key={post.id} className="blog-card blog-card--home">
+                    <Link to={`/blog/${post.slug || post.id}`} className="blog-card__link">
+                      <div className="blog-card__image-container">
+                        <img 
+                          src={post.featureImage || '/images/placeholder-blog.jpg'} 
+                          alt={post.title} 
+                          className="blog-card__image" 
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.src = '/images/placeholder-blog.jpg';
+                          }}
+                        />
+                        {post.category && (
+                          <span className="blog-card__category">{post.category}</span>
+                        )}
+                      </div>
+                      <div className="blog-card__content">
+                        <h3 className="blog-card__title">{post.title}</h3>
+                        <p className="blog-card__excerpt">
+                          {post.excerpt || post.content?.substring(0, 120) + '...'}
+                        </p>
+                        <div className="blog-card__meta">
+                          <div className="meta-left">
+                            <span className="post-date">
+                              {formatDate(post.createdAt)}
+                            </span>
+                            <span className="read-time">
+                              <i className="fas fa-clock"></i>
+                              {post.readTime || '3 min read'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="blog-card__footer">
+                          <span className="read-more">
+                            Read More
+                            <i className="fas fa-arrow-right"></i>
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="blog-empty">
+                <div className="empty-state__icon">
+                  <i className="fas fa-edit"></i>
+                </div>
+                <h3>No Articles Yet</h3>
+                <p>Check back soon for the latest fashion insights and tips.</p>
+              </div>
             )}
 
-            {collections.length > 0 && (
-              <section className="section section--elegant">
-                <div className="container">
-                  <div className="section__header">
-                    <div className="section__badge">Curated Selection</div>
-                    <h2 className="section__title">Our Collection</h2>
-                    <p className="section__subtitle">
-                      Explore our complete range of premium fashion
-                    </p>
-                    <div className="section__decorative">
-                      <div className="decorative-line"></div>
-                      <div className="decorative-dot"></div>
-                      <div className="decorative-line"></div>
-                    </div>
-                  </div>
-                  <div className="product-grid">
-                    {collections.map((product, index) => (
-                      <div 
-                        key={product.id} 
-                        className="product-card-wrapper"
-                        style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
-                      >
-                        <ProductCard
-                          id={product.id}
-                          image={product.image}
-                          images={product.images}
-                          title={product.title}
-                          price={product.price}
-                          originalPrice={product.originalPrice}
-                          discount={product.discount}
-                          badge={product.badge}
-                          category={product.category}
-                          stock={product.stock}
-                          material={product.material}
-                          brand={product.brand}
-                          offer={product.offer}
-                          onAddToCart={() => handleAddToCart(product)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {collections.length > 8 && (
-                    <div className="section__footer">
-                      <button className="view-more-btn">
-                        View All Collection
-                        <i className="fas fa-arrow-right"></i>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-          </>
-        )}
+            <div className="section__footer">
+              <Link to="/blog" className="view-all-btn view-all-btn--blog">
+                View All Articles
+                <i className="fas fa-arrow-right"></i>
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* Empty State */}
         {!loading && products.length === 0 && (
